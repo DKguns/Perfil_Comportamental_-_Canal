@@ -23,11 +23,16 @@
                         'pulse-icon': {
                             '0%, 100%': { transform: 'scale(1)', opacity: '1' },
                             '50%': { transform: 'scale(1.1)', opacity: '0.8' },
+                        },
+                        'float': {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
                         }
                     },
                     animation: {
                         'fade-in': 'fade-in 0.5s ease-out forwards',
                         'pulse-icon': 'pulse-icon 2s ease-in-out infinite',
+                        'float': 'float 3s ease-in-out infinite'
                     }
                 }
             }
@@ -49,9 +54,20 @@
             top: 0;
             z-index: -100;
         }
-        /* Classe para forçar quebra de página no PDF */
         .pdf-page-break {
             page-break-before: always;
+        }
+        .icon-circle-container {
+            width: 300px;
+            height: 300px;
+        }
+        .icon-item {
+            width: 64px;
+            height: 64px;
+            transition: transform 0.3s ease;
+        }
+        .icon-item:hover {
+            transform: scale(1.1);
         }
     </style>
 </head>
@@ -67,8 +83,11 @@
         </div>
         
         <div id="start-screen" class="text-center">
-             <div id="start-icons-container" class="flex flex-wrap justify-center gap-4 mb-8"></div>
-            <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-4">Descubra seu Perfil Integrado</h1>
+            <div class="relative icon-circle-container mx-auto mb-8 flex items-center justify-center">
+                <div class="absolute text-7xl font-bold text-gray-300 dark:text-gray-700 animate-pulse">?</div>
+                <!-- Icons will be placed here by JS -->
+            </div>
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-4">Desvende Seu Perfil</h1>
             <p class="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-xl mx-auto">Uma jornada em duas etapas para revelar como você age, se comunica e aprende.</p>
             <div class="mb-6">
                 <input type="text" id="name-input" placeholder="Digite seu nome aqui..." class="w-full max-w-md px-5 py-4 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition text-center text-lg">
@@ -154,6 +173,10 @@
                 <button id="close-answer-key-btn" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-all duration-300 shadow-md">Fechar Gabarito</button>
             </div>
         </div>
+        
+        <footer class="text-center text-sm text-gray-500 dark:text-gray-400 mt-8">
+            <p>© 2024 Diego Karloh. Todos os direitos reservados.</p>
+        </footer>
 
     </div>
 
@@ -577,30 +600,42 @@
             
             const sortedVak = Object.entries(vakScores).map(([key, score]) => ({ key, score })).sort((a, b) => b.score - a.score);
             const dominantVak = sortedVak[0];
-            const dominantVakData = vakProfileData[dominantVak.key];
             
+            const isProfileTie = sortedProfiles[0].score === sortedProfiles[1].score;
+            const isVakTie = sortedVak.length > 1 && sortedVak[0].score === sortedVak[1].score;
+
+            // Define base data, even with ties, we use the first one for logic keys
             const integratedKey = `${dominantProfile.key}-${dominantVak.key}`;
             const integratedData = integratedProfiles[integratedKey];
-            const dominantProfileData = profilesData[dominantProfile.key];
-            const secondaryProfileData = profilesData[secondaryProfile.key];
             const commStrategies = communicationStrategies[integratedKey];
             const checklistItems = improvementChecklist[lowestProfile.key];
-            
             const devPlan = developmentPlanData[dominantProfile.key][lowestProfile.key];
 
-            lastResults = { name, integratedData, dominantProfile, sortedProfiles, sortedVak };
+            let finalTitle = integratedData.title;
+            let finalDesc = integratedData.desc;
+            let finalSuperpower = integratedData.superpower;
+
+            if (isProfileTie) {
+                const tiedProfile1 = profilesData[dominantProfile.key];
+                const tiedProfile2 = profilesData[secondaryProfile.key];
+                finalTitle = `Perfil Híbrido: ${tiedProfile1.name} / ${tiedProfile2.name}`;
+                finalSuperpower = "Adaptabilidade Situacional";
+                finalDesc = `Você possui um equilíbrio notável entre os traços de ${tiedProfile1.name} e ${tiedProfile2.name}. Isso lhe confere uma grande versatilidade, permitindo que você se adapte a diferentes situações, ora usando a força de um, ora a sensibilidade do outro.`;
+            }
+
+            lastResults = { name, integratedData, dominantProfile, sortedProfiles, sortedVak, isProfileTie, isVakTie };
 
             resultsScreen.innerHTML = `
                 <div id="pdf-content" class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-lg w-full animate-fade-in space-y-8">
                     <div class="report-section text-center">
                         <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">Análise Integrada de <span class="text-blue-500">${name}</span></h2>
-                        <p class="text-lg font-bold text-gray-700 dark:text-gray-300 mt-2">Seu Perfil: <span class="text-indigo-500">${integratedData.title}</span></p>
+                        <p class="text-lg font-bold text-gray-700 dark:text-gray-300 mt-2 break-words">Seu Perfil: <span class="text-indigo-500">${finalTitle}</span></p>
                     </div>
 
                     <div class="report-section text-center bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-sm">Seu Superpoder</h3>
-                        <p class="text-2xl font-extrabold text-indigo-500 mt-1">${integratedData.superpower}</p>
-                        <p class="text-gray-700 dark:text-gray-300 mt-2 max-w-3xl mx-auto">${integratedData.desc}</p>
+                        <p class="text-2xl font-extrabold text-indigo-500 mt-1">${finalSuperpower}</p>
+                        <p class="text-gray-700 dark:text-gray-300 mt-2 max-w-3xl mx-auto">${finalDesc}</p>
                     </div>
 
                     <div class="report-section">
@@ -630,12 +665,22 @@
                         <h3 class="text-2xl font-bold text-center mb-4">Sua Dinâmica Comportamental</h3>
                         <div class="grid md:grid-cols-2 gap-6">
                             <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-700">
-                                <h4 class="text-xl font-bold text-blue-800 dark:text-blue-300 mb-3">Perfil Dominante: ${dominantProfileData.name} ${dominantProfileData.emoji}</h4>
-                                <p class="text-gray-700 dark:text-gray-300">${dominantProfileData.description}</p>
+                                ${isProfileTie ? `
+                                    <h4 class="text-xl font-bold text-blue-800 dark:text-blue-300 mb-3">Perfil Dominante Híbrido: ${profilesData[dominantProfile.key].name} ${profilesData[dominantProfile.key].emoji} / ${profilesData[secondaryProfile.key].name} ${profilesData[secondaryProfile.key].emoji}</h4>
+                                    <p class="text-gray-700 dark:text-gray-300">Você não tem um, mas dois perfis que se destacam com a mesma intensidade. Isso significa que você é uma pessoa altamente adaptável, capaz de alternar entre diferentes estilos de comportamento conforme a necessidade da situação. Sua força reside na sua flexibilidade.</p>
+                                ` : `
+                                    <h4 class="text-xl font-bold text-blue-800 dark:text-blue-300 mb-3">Perfil Dominante: ${profilesData[dominantProfile.key].name} ${profilesData[dominantProfile.key].emoji}</h4>
+                                    <p class="text-gray-700 dark:text-gray-300">${profilesData[dominantProfile.key].description}</p>
+                                `}
                             </div>
                             <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg border border-gray-200 dark:border-gray-600">
-                                <h4 class="text-xl font-bold text-gray-800 dark:text-gray-300 mb-3">Perfil Secundário: ${secondaryProfileData.name} ${secondaryProfileData.emoji}</h4>
-                                <p class="text-gray-700 dark:text-gray-300">${secondaryProfileData.description}</p>
+                                ${isProfileTie ? `
+                                    <h4 class="text-xl font-bold text-gray-800 dark:text-gray-300 mb-3">Sua Força é o Equilíbrio ⚖️</h4>
+                                    <p class="text-gray-700 dark:text-gray-300">Em vez de ter um perfil secundário, você tem um segundo perfil dominante. Explore a sinergia entre seus dois lados para maximizar seu potencial. Entender quando usar cada um é a chave do seu sucesso.</p>
+                                ` : `
+                                    <h4 class="text-xl font-bold text-gray-800 dark:text-gray-300 mb-3">Perfil Secundário: ${profilesData[secondaryProfile.key].name} ${profilesData[secondaryProfile.key].emoji}</h4>
+                                    <p class="text-gray-700 dark:text-gray-300">${profilesData[secondaryProfile.key].description}</p>
+                                `}
                             </div>
                         </div>
                     </div>
@@ -644,8 +689,13 @@
                         <h3 class="text-2xl font-bold text-center mb-4">Sua Forma de Comunicar</h3>
                         <div class="grid md:grid-cols-2 gap-6">
                             <div class="bg-teal-50 dark:bg-teal-900/20 p-6 rounded-lg border border-teal-200 dark:border-teal-700">
-                                <h4 class="text-xl font-bold text-teal-800 dark:text-teal-300 mb-3">Seu Canal Principal: ${dominantVakData.name} ${dominantVakData.emoji}</h4>
-                                <p class="text-gray-700 dark:text-gray-300">${dominantVakData.description}</p>
+                                ${isVakTie ? `
+                                    <h4 class="text-xl font-bold text-teal-800 dark:text-teal-300 mb-3">Seu Canal Híbrido: ${vakProfileData[sortedVak[0].key].name} ${vakProfileData[sortedVak[0].key].emoji} / ${vakProfileData[sortedVak[1].key].name} ${vakProfileData[sortedVak[1].key].emoji}</h4>
+                                    <p class="text-gray-700 dark:text-gray-300">Você tem uma comunicação flexível, utilizando tanto elementos do canal ${vakProfileData[sortedVak[0].key].name} quanto do ${vakProfileData[sortedVak[1].key].name}. Isso permite que você se conecte com uma gama maior de pessoas, adaptando sua abordagem conforme a necessidade.</p>
+                                ` : `
+                                    <h4 class="text-xl font-bold text-teal-800 dark:text-teal-300 mb-3">Seu Canal Principal: ${vakProfileData[dominantVak.key].name} ${vakProfileData[dominantVak.key].emoji}</h4>
+                                    <p class="text-gray-700 dark:text-gray-300">${vakProfileData[dominantVak.key].description}</p>
+                                `}
                             </div>
                              <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-700">
                                 <h4 class="text-xl font-bold text-green-800 dark:text-green-300 mb-3">Comunicação e Comportamento na Prática</h4>
@@ -1069,13 +1119,29 @@
         }
 
         function populateIcons() {
+            const iconContainer = document.querySelector('.icon-circle-container');
             const allEmojis = { ...profilesData, ...vakProfileData };
-            startIconsContainer.innerHTML = ''; analyzingIconsContainer.innerHTML = '';
-            // Ordem customizada para melhor visual
-            const iconOrder = ['I', 'O', 'C', 'A', 'V', 'AU', 'K'];
-            iconOrder.forEach(key => {
-                 startIconsContainer.innerHTML += `<div class="flex justify-center items-center h-20 w-20 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4"><span class="text-4xl">${allEmojis[key].emoji}</span></div>`;
+            const iconOrder = ['I', 'V', 'C', 'O', 'AU', 'A', 'K'];
+            const radius = 120; // raio do círculo
+            const centerX = 150; // centro X do container
+            const centerY = 150; // centro Y do container
+
+            iconOrder.forEach((key, index) => {
+                const angle = (index / iconOrder.length) * 2 * Math.PI - (Math.PI / 2); // Começa do topo
+                const x = centerX + radius * Math.cos(angle) - 32; // 32 é metade da largura do ícone
+                const y = centerY + radius * Math.sin(angle) - 32; // 32 é metade da altura do ícone
+                
+                const delay = index * 150;
+
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'icon-item absolute flex justify-center items-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 animate-float';
+                iconDiv.style.left = `${x}px`;
+                iconDiv.style.top = `${y}px`;
+                iconDiv.style.animationDelay = `${delay}ms`;
+                iconDiv.innerHTML = `<span class="text-4xl">${allEmojis[key].emoji}</span>`;
+                iconContainer.appendChild(iconDiv);
             });
+
 
             Object.keys(profilesData).forEach((key, index) => {
                 analyzingIconsContainer.innerHTML += `<div class="text-6xl" style="animation: pulse-icon 2s ease-in-out infinite; animation-delay: ${index * 0.4}s;">${profilesData[key].emoji}</div>`;
