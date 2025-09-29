@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR" class="">
 <head>
@@ -324,6 +323,57 @@
             'I-K': { title: "O Explorador Intuitivo", superpower: "Inovação Experimental", desc: "A curiosidade da Águia se une à necessidade de experimentar do Cinestésico. Você é um pioneiro que aprende fazendo e desbravando.", comms: "Dê a você a liberdade para experimentar e prototipar. Você se comunica melhor mostrando um projeto piloto.", challenge: "A falta de paciência com rotinas pode gerar caos. É preciso documentar suas descobertas." }
         };
 
+        const communicationStrategies = {
+            'A-V': { 
+                tipsForUser: ["Use gráficos e checklists para delegar tarefas. Isso garante que sua equipe veja o objetivo tão claramente quanto você.", "Antes de uma decisão importante, desenhe um mapa mental rápido dos prós e contras. Isso pode revelar pontos que você não viu."],
+                tipsForOthers: ["Seja direto e mostre-me dados visuais, como um gráfico de progresso ou um dashboard.", "Evite reuniões longas sem um apoio visual claro. Uma apresentação simples é mais eficaz."]
+            },
+            'A-AU': { 
+                tipsForUser: ["Após dar uma instrução, peça para a pessoa repetir o que entendeu. Isso garante o alinhamento.", "Module seu tom de voz. Sua objetividade é uma força, mas um tom mais amigável pode motivar mais a equipe."],
+                tipsForOthers: ["Vá direto ao ponto. Apresente sua conclusão primeiro, e depois os detalhes, se eu perguntar.", "Use uma linguagem forte e confiante. Evite hesitar ao apresentar uma ideia."]
+            },
+            'A-K': { 
+                tipsForUser: ["Em vez de apenas dizer o que fazer, mostre um exemplo prático. Um protótipo ou uma demonstração rápida valem mais que mil palavras.", "Reconheça que sua necessidade de 'agir agora' pode gerar ansiedade em perfis mais planejadores (Lobo). Dê a eles um momento para se organizarem."],
+                tipsForOthers: ["Se quer minha ajuda, convide-me para 'colocar a mão na massa' com você.", "Vamos caminhar enquanto conversamos. O movimento me ajuda a pensar e a tomar decisões."]
+            },
+            'O-V': { 
+                tipsForUser: ["Transforme seus planos detalhados em fluxogramas ou checklists visuais. Isso facilita a comunicação com perfis mais diretos (Tubarão, Águia).", "Use cores para organizar suas tarefas e prioridades. A organização visual aumenta sua eficiência."],
+                tipsForOthers: ["Apresente-me as informações de forma organizada e com um passo a passo claro.", "Envie-me um email com os detalhes antes da reunião para que eu possa me preparar."]
+            },
+            'O-AU': { 
+                tipsForUser: ["Leia seus e-mails importantes em voz alta antes de enviar. Isso ajuda a pegar erros e a garantir que o tom está correto.", "Ao explicar um processo, use uma sequência lógica clara, como 'Primeiro, fazemos X. Segundo, fazemos Y...'."],
+                tipsForOthers: ["Explique o 'porquê' por trás de uma regra ou processo. A lógica me ajuda a aceitar e a seguir.", "Evite ambiguidades. Seja específico nos seus pedidos e nas informações que compartilha."]
+            },
+            'O-K': { 
+                tipsForUser: ["Crie padrões e modelos para suas tarefas repetitivas. Isso une sua necessidade de método (Lobo) com a eficiência prática (Cinestésico).", "Faça pausas regulares para se alongar ou caminhar. Isso mantém sua energia e foco nos detalhes."],
+                tipsForOthers: ["Dê-me tempo para experimentar uma nova ferramenta ou processo antes de esperar produtividade máxima.", "Permita-me organizar meu próprio espaço de trabalho. Um ambiente físico ordenado é crucial para mim."]
+            },
+            'C-V': { 
+                tipsForUser: ["Preste atenção na linguagem não-verbal das pessoas. Sua sensibilidade visual (Gato-Visual) permite que você perceba o que não está sendo dito.", "Use imagens e emojis em suas comunicações para criar um tom mais amigável e acessível."],
+                tipsForOthers: ["Um ambiente de trabalho limpo e agradável me deixa mais motivado e colaborativo.", "Sorria e mantenha contato visual. Isso me mostra que você está conectado e aberto à conversa."]
+            },
+            'C-AU': { 
+                tipsForUser: ["Use sua habilidade de escuta para mediar conflitos, garantindo que todos os lados se sintam ouvidos.", "Pratique a comunicação assertiva. É possível ser empático e, ao mesmo tempo, direto sobre suas necessidades e limites."],
+                tipsForOthers: ["Pergunte minha opinião e ouça genuinamente minha resposta. Sinto-me valorizado quando minhas ideias são ouvidas.", "Use um tom de voz calmo e amigável, especialmente ao dar feedback."]
+            },
+            'C-K': { 
+                tipsForUser: ["Ofereça ajuda prática, não apenas palavras de apoio. Sua natureza Cinestésica o torna ótimo em dar suporte real.", "Inicie atividades de integração na equipe que envolvam movimento, como um café ou uma pequena comemoração."],
+                tipsForOthers: ["Um gesto de apreço, como um toque no ombro (se apropriado) ou um 'high-five', significa muito para mim.", "Crie um ambiente confortável. Pequenos detalhes como uma cadeira boa fazem toda a diferença para meu bem-estar."]
+            },
+            'I-V': { 
+                tipsForUser: ["Traduza suas grandes ideias em um mapa mental ou um quadro de inspiração. Isso ajuda os outros a 'verem' o que você vê.", "Ao apresentar uma nova visão, comece com uma imagem poderosa que represente o futuro que você imagina."],
+                tipsForOthers: ["Dê-me espaço em um quadro branco para rabiscar e conectar ideias. É assim que eu penso melhor.", "Mostre-me exemplos visuais e inspirações de outros projetos para estimular minha criatividade."]
+            },
+            'I-AU': { 
+                tipsForUser: ["Grave suas ideias em áudio quando estiver inspirado. Isso permite que você capture a essência sem se perder na escrita.", "Estruture suas apresentações como uma história, com começo, meio e fim. Isso torna suas ideias mais cativantes."],
+                tipsForOthers: ["Vamos fazer um brainstorming verbal. Jogar ideias em voz alta me ajuda a criar e a inovar.", "Não me prenda a detalhes operacionais logo no início. Deixe-me explorar o 'e se?' primeiro."]
+            },
+            'I-K': { 
+                tipsForUser: ["Crie protótipos rápidos de suas ideias. Um modelo, mesmo que simples, torna sua visão tangível e mais fácil de entender.", "Alterne entre períodos de pensamento criativo e atividades físicas. Isso ajuda a manter sua energia e a gerar novos insights."],
+                tipsForOthers: ["Dê-me liberdade para experimentar e testar minhas ideias na prática.", "Se quiser que eu me interesse por um projeto, deixe-me 'sentir' o seu potencial e o impacto que ele pode ter."]
+            }
+        };
+
         // --- VARIÁVEIS DE ESTADO ---
         let currentQuestionIndex = 0, currentTest = null, currentAnswers = [], currentQuestions = [], lastResults = {};
         let storedProfileScores = {}, storedVakScores = {};
@@ -445,6 +495,7 @@
             const integratedData = integratedProfiles[integratedKey];
             const dominantProfileData = profilesData[dominantProfile.key];
             const secondaryProfileData = profilesData[secondaryProfile.key];
+            const commStrategies = communicationStrategies[integratedKey];
             
             const devPlan = developmentPlanData[dominantProfile.key][lowestProfile.key];
 
@@ -507,10 +558,16 @@
                                 <h4 class="text-xl font-bold text-teal-800 dark:text-teal-300 mb-3">Seu Canal Principal: ${dominantVakData.name} ${dominantVakData.emoji}</h4>
                                 <p class="text-gray-700 dark:text-gray-300">${dominantVakData.description}</p>
                             </div>
-                            <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-700">
-                                <h4 class="text-xl font-bold text-green-800 dark:text-green-300 mb-3">Comunicação Efetiva</h4>
-                                <p class="text-gray-700 dark:text-gray-300 mb-2"><strong>Para se conectar com você:</strong> ${integratedData.comms}</p>
-                                <p class="text-gray-700 dark:text-gray-300"><strong>Seu principal desafio:</strong> ${integratedData.challenge}</p>
+                             <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-700">
+                                <h4 class="text-xl font-bold text-green-800 dark:text-green-300 mb-3">Comunicação na Prática</h4>
+                                <p class="text-gray-700 dark:text-gray-300 mb-2 mt-4"><strong>Para se comunicar melhor com os outros:</strong></p>
+                                <ul class="text-gray-700 dark:text-gray-300 space-y-2 list-disc list-inside">
+                                    ${commStrategies.tipsForUser.map(tip => `<li>${tip}</li>`).join('')}
+                                </ul>
+                                <p class="text-gray-700 dark:text-gray-300 mb-2 mt-4"><strong>Como os outros podem se comunicar com você:</strong></p>
+                                <ul class="text-gray-700 dark:text-gray-300 space-y-2 list-disc list-inside">
+                                     ${commStrategies.tipsForOthers.map(tip => `<li>${tip}</li>`).join('')}
+                                </ul>
                             </div>
                         </div>
                     </div>
