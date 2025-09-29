@@ -27,12 +27,22 @@
                         'float': {
                             '0%, 100%': { transform: 'translateY(0px)' },
                             '50%': { transform: 'translateY(-10px)' },
+                        },
+                        'reveal': {
+                            '0%': { opacity: '0', transform: 'scale(0.5)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                        'spin-roulette': {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(1080deg)' },
                         }
                     },
                     animation: {
                         'fade-in': 'fade-in 0.5s ease-out forwards',
                         'pulse-icon': 'pulse-icon 2s ease-in-out infinite',
-                        'float': 'float 3s ease-in-out infinite'
+                        'float': 'float 3s ease-in-out infinite',
+                        'reveal': 'reveal 0.5s ease-out forwards',
+                        'spin-roulette': 'spin-roulette 3.2s cubic-bezier(0.15, 0.85, 0.45, 1) forwards'
                     }
                 }
             }
@@ -68,6 +78,10 @@
         }
         .icon-item:hover {
             transform: scale(1.1);
+        }
+        .analyzing-icon {
+            opacity: 0;
+            animation: reveal 0.5s ease-out forwards;
         }
     </style>
 </head>
@@ -129,7 +143,9 @@
         </div>
         
         <div id="analyzing-screen" class="hidden text-center">
-            <div id="analyzing-icons-container" class="flex justify-center items-center space-x-4 mb-6"></div>
+            <div id="analyzing-icons-container" class="relative icon-circle-container mx-auto mb-8 flex items-center justify-center">
+                 <!-- Animated icons will be placed here by JS -->
+            </div>
             <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white mt-6">Integrando seus Perfis...</h2>
             <p class="text-lg text-gray-600 dark:text-gray-300">Estamos a construir o seu mapa de personalidade completo.</p>
         </div>
@@ -576,10 +592,11 @@
                 currentAnswers.forEach(answer => { if (answer && answer !== 'N') scores[answer]++; });
                 storedVakScores = scores;
                 showScreen(analyzingScreen);
+                animateAnalyzingIcons();
                 setTimeout(() => {
                     displayIntegratedResults(storedProfileScores, storedVakScores);
                     clearProgress();
-                }, 3000);
+                }, 3500);
             }
         }
         function restartQuiz() {
@@ -589,6 +606,7 @@
             storedProfileScores = {};
             storedVakScores = {};
             clearProgress();
+            document.getElementById('analyzing-icons-container').classList.remove('animate-spin-roulette');
             showScreen(startScreen);
         }
 
@@ -1141,10 +1159,33 @@
                 iconDiv.innerHTML = `<span class="text-4xl">${allEmojis[key].emoji}</span>`;
                 iconContainer.appendChild(iconDiv);
             });
+        }
+        
+        function animateAnalyzingIcons() {
+            const iconContainer = document.getElementById('analyzing-icons-container');
+            iconContainer.innerHTML = ''; 
+            iconContainer.classList.add('animate-spin-roulette');
 
+            const allEmojis = { ...profilesData, ...vakProfileData };
+            const iconOrder = ['I', 'V', 'C', 'O', 'AU', 'A', 'K'];
+            const radius = 120;
+            const centerX = 150;
+            const centerY = 150;
 
-            Object.keys(profilesData).forEach((key, index) => {
-                analyzingIconsContainer.innerHTML += `<div class="text-6xl" style="animation: pulse-icon 2s ease-in-out infinite; animation-delay: ${index * 0.4}s;">${profilesData[key].emoji}</div>`;
+            iconOrder.forEach((key, index) => {
+                const angle = (index / iconOrder.length) * 2 * Math.PI - (Math.PI / 2);
+                const x = centerX + radius * Math.cos(angle) - 32;
+                const y = centerY + radius * Math.sin(angle) - 32;
+                
+                const delay = index * 100;
+
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'analyzing-icon absolute flex justify-center items-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-4';
+                iconDiv.style.left = `${x}px`;
+                iconDiv.style.top = `${y}px`;
+                iconDiv.style.animationDelay = `${delay}ms`;
+                iconDiv.innerHTML = `<span class="text-4xl">${allEmojis[key].emoji}</span>`;
+                iconContainer.appendChild(iconDiv);
             });
         }
 
