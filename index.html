@@ -648,12 +648,12 @@
                                 <p class="text-gray-700 dark:text-gray-300">${dominantVakData.description}</p>
                             </div>
                              <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-700">
-                                <h4 class="text-xl font-bold text-green-800 dark:text-green-300 mb-3">Comunicação na Prática</h4>
-                                <p class="text-gray-700 dark:text-gray-300 mb-2 mt-4"><strong>Para se comunicar melhor com os outros:</strong></p>
+                                <h4 class="text-xl font-bold text-green-800 dark:text-green-300 mb-3">Comunicação e Comportamento na Prática</h4>
+                                <p class="text-gray-700 dark:text-gray-300 mb-2 mt-4"><strong>Para se Potenciar (Faça Mais Disso):</strong></p>
                                 <ul class="text-gray-700 dark:text-gray-300 space-y-2 list-disc list-inside">
                                     ${commStrategies.tipsForUser.map(tip => `<li>${tip}</li>`).join('')}
                                 </ul>
-                                <p class="text-gray-700 dark:text-gray-300 mb-2 mt-4"><strong>Como os outros podem se comunicar com você:</strong></p>
+                                <p class="text-gray-700 dark:text-gray-300 mb-2 mt-4"><strong>Pontos de Atenção (Cuidado com Isso):</strong></p>
                                 <ul class="text-gray-700 dark:text-gray-300 space-y-2 list-disc list-inside">
                                      ${commStrategies.tipsForOthers.map(tip => `<li>${tip}</li>`).join('')}
                                 </ul>
@@ -1007,11 +1007,17 @@
             const sections = document.querySelectorAll('.report-section');
 
             for (const section of sections) {
+                // Forçar o tema claro para o PDF para garantir a legibilidade
+                const isDark = document.documentElement.classList.contains('dark');
+                if(isDark) document.documentElement.classList.remove('dark');
+                
                 const canvas = await html2canvas(section, { 
                     scale: 2, 
                     useCORS: true, 
-                    backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#ffffff'
+                    backgroundColor: '#ffffff'
                 });
+
+                 if(isDark) document.documentElement.classList.add('dark');
                 
                 const imgData = canvas.toDataURL('image/png');
                 const imgWidth = pageWidth - margin * 2;
