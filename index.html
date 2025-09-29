@@ -850,11 +850,126 @@
         }
         
         async function shareResultsAsImage() {
-             showModal(validationModal, "A funcionalidade de partilhar imagem está em desenvolvimento!");
+            const shareBtn = document.getElementById('share-btn');
+            const shareBtnText = document.getElementById('share-btn-text');
+            shareBtn.disabled = true;
+            shareBtnText.textContent = 'A gerar...';
+
+            const { name, integratedData, sortedProfiles } = lastResults;
+            document.getElementById('share-card-name').textContent = name;
+            document.getElementById('share-card-title').textContent = integratedData.title;
+            document.getElementById('share-card-superpower').textContent = `Superpoder: ${integratedData.superpower}`;
+            
+            const chartContainer = document.getElementById('share-card-chart');
+            const chartCanvas = document.createElement('canvas');
+            chartContainer.innerHTML = '';
+            chartContainer.appendChild(chartCanvas);
+
+            new Chart(chartCanvas.getContext('2d'), {
+                type: 'radar', 
+                data: { 
+                    labels: ['🦅', '🐈', '🐺', '🦈'], 
+                    datasets: [{ 
+                        data: [
+                            sortedProfiles.find(p => p.key === 'I').percentage,
+                            sortedProfiles.find(p => p.key === 'C').percentage,
+                            sortedProfiles.find(p => p.key === 'O').percentage,
+                            sortedProfiles.find(p => p.key === 'A').percentage
+                        ],
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)', 
+                        borderColor: 'rgba(59, 130, 246, 1)', 
+                        borderWidth: 1.5 
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    animation: { duration: 0 }, 
+                    scales: { 
+                        r: { 
+                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' }, 
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' }, 
+                            pointLabels: { font: { size: 20 }, color: '#1F2937' }, 
+                            ticks: { display: false, max: 100, min: 0 }
+                        }
+                    }, 
+                    plugins: { legend: { display: false } } 
+                }
+            });
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const cardElement = document.getElementById('share-card');
+            try {
+                const canvas = await html2canvas(cardElement, { scale: 2 });
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                const file = new File([blob], `perfil_${name.replace(/\s/g, '_')}.png`, { type: 'image/png' });
+                if (navigator.share && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ title: 'Meu Perfil Integrado', text: `Descobri meu perfil: ${integratedData.title}!`, files: [file] });
+                    shareBtnText.textContent = 'Partilhado!';
+                } else {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(file);
+                    link.download = file.name;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    shareBtnText.textContent = 'Imagem Guardada!';
+                }
+            } catch (error) { 
+                console.error("Erro ao partilhar imagem:", error); 
+                shareBtnText.textContent = 'Erro!';
+            } 
+            finally {
+                 setTimeout(() => {
+                    shareBtn.disabled = false;
+                    shareBtnText.textContent = 'Partilhar Imagem';
+                 }, 3000);
+            }
         }
 
         function generatePDF() {
-            showModal(validationModal, "A funcionalidade de gerar PDF está em desenvolvimento!");
+            const { jsPDF } = window.jspdf;
+            const downloadBtn = document.getElementById('download-pdf-btn');
+            downloadBtn.textContent = 'A gerar...';
+            downloadBtn.disabled = true;
+
+            const reportElement = document.getElementById('pdf-content');
+            
+            html2canvas(reportElement, {
+                scale: 2,
+                useCORS: true, 
+                backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#ffffff'
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const canvasWidth = canvas.width;
+                const canvasHeight = canvas.height;
+                const ratio = canvasWidth / canvasHeight;
+                const imgWidth = pdfWidth - 20; // with margin
+                const imgHeight = imgWidth / ratio;
+                let heightLeft = imgHeight;
+                let position = 10; // top margin
+
+                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= (pdfHeight - 20);
+
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight + 10; // top margin for new page
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= (pdfHeight - 20);
+                }
+
+                pdf.save(`Relatorio_Perfil_${lastResults.name.replace(/\s/g, '_')}.pdf`);
+                downloadBtn.textContent = 'Baixar Relatório';
+                downloadBtn.disabled = false;
+            }).catch(err => {
+                console.error("Erro ao gerar PDF:", err);
+                downloadBtn.textContent = 'Baixar Relatório';
+                downloadBtn.disabled = false;
+            });
         }
         
         function showAnswerKey() {
