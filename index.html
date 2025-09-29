@@ -1,1 +1,829 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Perfil Integrado</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- O script de configuração do Tailwind deve vir DEPOIS do script da biblioteca principal -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    keyframes: {
+                        'fade-in': {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        'pulse-icon': {
+                            '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+                            '50%': { transform: 'scale(1.1)', opacity: '0.8' },
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fade-in 0.5s ease-out forwards',
+                        'pulse-icon': 'pulse-icon 2s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .question-card { animation: fade-in 0.5s ease-out forwards; }
+        .modal-backdrop { transition: opacity 0.3s ease; }
+        #share-card-wrapper {
+            position: fixed;
+            left: -9999px; 
+            top: 0;
+            z-index: -100;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased transition-colors duration-300 overflow-x-hidden">
+
+    <div id="app" class="container mx-auto max-w-5xl p-4 sm:p-6 md:p-8 min-h-screen flex flex-col justify-center">
+        
+        <div class="absolute top-4 right-4 z-10">
+            <button id="theme-toggle" class="p-2 rounded-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-900 focus:ring-blue-500">
+                <svg id="theme-icon-sun" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="theme-icon-moon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+        </div>
+        
+        <div id="start-screen" class="text-center">
+             <div id="start-icons-container" class="flex flex-wrap justify-center gap-4 mb-8"></div>
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-4">Descubra seu Perfil Integrado</h1>
+            <p class="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-xl mx-auto">Uma jornada em duas etapas para revelar como você age, se comunica e aprende.</p>
+            <div class="mb-6">
+                <input type="text" id="name-input" placeholder="Digite seu nome aqui..." class="w-full max-w-md px-5 py-4 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition text-center text-lg">
+            </div>
+            <button id="start-btn" class="bg-blue-600 text-white font-bold py-4 px-10 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg transform hover:scale-105 text-lg">
+                Iniciar Jornada
+            </button>
+            <div class="absolute bottom-4 right-4">
+                <button id="admin-btn" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </button>
+            </div>
+        </div>
+        
+        <div id="transition-screen" class="hidden text-center animate-fade-in">
+            <div class="text-6xl mb-6">✅</div>
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">Etapa 1 Concluída!</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-xl mx-auto">Excelente! Agora, vamos para a segunda parte para entendermos seus canais de comunicação e aprendizado.</p>
+            <button id="start-vak-btn" class="bg-teal-600 text-white font-bold py-4 px-10 rounded-xl hover:bg-teal-700 transition-all duration-300 shadow-lg transform hover:scale-105 text-lg">
+                Continuar
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="hidden w-full max-w-4xl mx-auto">
+            <div id="quiz-header" class="text-center mb-4">
+                 <h2 id="quiz-title" class="text-2xl font-bold text-blue-600 dark:text-blue-400"></h2>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div class="text-center mb-8">
+                <p class="text-gray-600 dark:text-gray-400 font-semibold">Pergunta <span id="question-counter">1</span> de <span id="total-questions">25</span></p>
+            </div>
+            <div id="question-container"></div>
+            <div class="flex justify-between mt-8">
+                 <button id="prev-btn" class="bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-3 px-8 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors duration-300">Anterior</button>
+                 <button id="next-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors duration-300">Próxima</button>
+            </div>
+        </div>
+        
+        <div id="analyzing-screen" class="hidden text-center">
+            <div id="analyzing-icons-container" class="flex justify-center items-center space-x-4 mb-6"></div>
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white mt-6">Integrando seus Perfis...</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-300">Estamos a construir o seu mapa de personalidade completo.</p>
+        </div>
+
+        <div id="results-screen" class="hidden w-full"></div>
+
+        <div id="answer-key-screen" class="hidden w-full max-w-5xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 text-center">Gabarito do Perfil Comportamental</h2>
+            <div class="overflow-x-auto mb-12">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="py-3 px-6">#</th>
+                            <th scope="col" class="py-3 px-6">Águia 🦅 (I)</th>
+                            <th scope="col" class="py-3 px-6">Gato 🐈 (C)</th>
+                            <th scope="col" class="py-3 px-6">Lobo 🐺 (O)</th>
+                            <th scope="col" class="py-3 px-6">Tubarão 🦈 (A)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="answer-key-body">
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 text-center">Gabarito do Teste de Canais</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="py-3 px-6">#</th>
+                            <th scope="col" class="py-3 px-6">Afirmação</th>
+                            <th scope="col" class="py-3 px-6">Canal (se 'Sim')</th>
+                        </tr>
+                    </thead>
+                    <tbody id="answer-key-body-vak">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-8 text-center">
+                <button id="close-answer-key-btn" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-all duration-300 shadow-md">Fechar Gabarito</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="validation-modal" class="modal-backdrop hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 opacity-0">
+        <div class="modal-content bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
+            <h3 class="text-xl font-bold mb-4">Atenção!</h3>
+            <p id="modal-message" class="mb-6"></p>
+            <button id="modal-close-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition">OK</button>
+        </div>
+    </div>
+     <div id="password-modal" class="modal-backdrop hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 opacity-0">
+        <div class="modal-content bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
+            <h3 class="text-xl font-bold mb-4">Acesso Restrito</h3>
+            <p class="mb-4 text-gray-600 dark:text-gray-300">Por favor, insira a senha para ver o gabarito.</p>
+            <input type="password" id="password-input" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 mb-4">
+            <div class="flex gap-4">
+                <button id="password-cancel-btn" class="w-full bg-gray-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition">Cancelar</button>
+                <button id="password-submit-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition">Entrar</button>
+            </div>
+        </div>
+    </div>
+    <div id="function-modal" class="modal-backdrop hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 opacity-0">
+         <div class="modal-content bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl text-left max-w-md w-full">
+            <h3 id="function-modal-title" class="text-2xl font-bold mb-4 text-center"></h3>
+            <div class="space-y-4">
+                <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
+                    <h4 class="text-lg font-bold text-green-800 dark:text-green-300 mb-2">Pontos Fortes na Área</h4>
+                    <ul id="function-modal-strengths" class="text-gray-700 dark:text-gray-300 space-y-2"></ul>
+                </div>
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                    <h4 class="text-lg font-bold text-yellow-800 dark:text-yellow-300 mb-2">Pontos a Melhorar na Área</h4>
+                    <ul id="function-modal-weaknesses" class="text-gray-700 dark:text-gray-300 space-y-2"></ul>
+                </div>
+            </div>
+            <button id="function-modal-close-btn" class="mt-6 w-full bg-gray-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition">Fechar</button>
+        </div>
+    </div>
+     <div id="interaction-modal" class="modal-backdrop hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 opacity-0">
+         <div class="modal-content bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl text-left max-w-md w-full">
+            <h3 id="interaction-modal-title" class="text-2xl font-bold mb-4 text-center"></h3>
+            <div class="space-y-4">
+                <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
+                    <h4 class="text-lg font-bold text-green-800 dark:text-green-300 mb-2">Sinergias</h4>
+                    <p id="interaction-modal-synergy" class="text-gray-700 dark:text-gray-300"></p>
+                </div>
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                    <h4 class="text-lg font-bold text-yellow-800 dark:text-yellow-300 mb-2">Pontos de Atenção</h4>
+                    <p id="interaction-modal-attention" class="text-gray-700 dark:text-gray-300"></p>
+                </div>
+            </div>
+            <button id="interaction-modal-close-btn" class="mt-6 w-full bg-gray-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition">Fechar</button>
+        </div>
+    </div>
+
+    <div id="share-card-wrapper">
+        <div id="share-card" class="bg-white p-6 w-[450px]">
+            <h2 id="share-card-name" class="text-2xl font-bold text-center text-gray-800 mb-1"></h2>
+            <p id="share-card-title" class="text-center text-indigo-500 font-bold text-lg"></p>
+            <p id="share-card-superpower" class="text-center text-gray-600 text-sm mb-4"></p>
+            <div id="share-card-chart" class="w-full h-48 mx-auto"></div>
+             <div class="mt-4 text-center text-xs text-gray-500">
+                Faça sua análise completa em [URL]
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // --- DADOS DOS TESTES ---
+        const profileTestQuestions = [
+            { question: "1. Eu sou...", options: [ { text: "Idealista, criativo e visionário", profile: "I" }, { text: "Divertido, espiritual e benéfico", profile: "C" }, { text: "Confiável, meticuloso e previsível", profile: "O" }, { text: "Focado, determinado e persistente", profile: "A" } ] },
+            { question: "2. Eu gosto de...", options: [ { text: "Ser piloto", profile: "A" }, { text: "Conversar com os passageiros", profile: "C" }, { text: "Planejar a viagem", profile: "O" }, { text: "Explorar novas rotas", profile: "I" } ] },
+            { question: "3. Se você quiser se dar bem comigo...", options: [ { text: "Me dê liberdade", profile: "I" }, { text: "Me deixe saber sua expectativa", profile: "O" }, { text: "Seja amigável, carinhoso e compreensivo", profile: "C" }, { text: "Lidere, siga ou saia do caminho", profile: "A" } ] },
+            { question: "4. Para conseguir obter bons resultados é preciso...", options: [ { text: "Ter incertezas", profile: "I" }, { text: "Controlar o essencial", profile: "A" }, { text: "Diversão e celebração", profile: "C" }, { text: "Planejar e obter recursos", profile: "O" } ] },
+            { question: "5. Eu me divirto quando...", options: [ { text: "Estou me exercitando", profile: "A" }, { text: "Tenho novidades", profile: "I" }, { text: "Estou com os outros", profile: "C" }, { text: "Determino as regras", profile: "O" } ] },
+            { question: "6. Eu penso que...", options: [ { text: "Unidos venceremos, divididos perderemos", profile: "C" }, { text: "O ataque é melhor que a defesa", profile: "A" }, { text: "É bom ser manso, mas andar com porrete", profile: "I" }, { text: "Um homem prevenido vale por dois", profile: "O" } ] },
+            { question: "7. Minha preocupação é...", options: [ { text: "Gerar a ideia global", profile: "I" }, { text: "Fazer com que as pessoas gostem", profile: "C" }, { text: "Fazer com que funcione", profile: "O" }, { text: "Fazer com que aconteça", profile: "A" } ] },
+            { question: "8. Eu prefiro...", options: [ { text: "Perguntas a respostas", profile: "I" }, { text: "Ter todos os detalhes", profile: "O" }, { text: "Vantagens a meu favor", profile: "A" }, { text: "Que todos tenham a chance de ser ouvidos", profile: "C" } ] },
+            { question: "9. Eu gosto de...", options: [ { text: "Fazer progresso", profile: "A" }, { text: "Construir memórias", profile: "C" }, { text: "Fazer sentido", profile: "O" }, { text: "Tornar as pessoas confortáveis", profile: "I" } ] },
+            { question: "10. Eu gosto de chegar...", options: [ { text: "Na frente", profile: "A" }, { text: "Junto", profile: "C" }, { text: "Na hora", profile: "O" }, { text: "Em outro lugar", profile: "I" } ] },
+            { question: "11. Um ótimo dia para mim é quando...", options: [ { text: "Consigo fazer muitas coisas", profile: "A" }, { text: "Me divirto com meus amigos", profile: "C" }, { text: "Tudo segue conforme planejado", profile: "O" }, { text: "Desfruto de coisas novas e estimulantes", profile: "I" } ] },
+            { question: "12. Eu vejo a morte como...", options: [ { text: "Uma grande aventura misteriosa", profile: "I" }, { text: "Oportunidade para rever os falecidos", profile: "C" }, { text: "Um modo de receber recompensas", profile: "A" }, { text: "Algo que sempre chega muito cedo", profile: "O" } ] },
+            { question: "13. Minha filosofia de vida é...", options: [ { text: "Há ganhadores e perdedores, e eu acredito ser um ganhador", profile: "A" }, { text: "Para eu ganhar, ninguém precisa perder", profile: "C" }, { text: "Para ganhar é preciso seguir as regras", profile: "O" }, { text: "Para ganhar, é necessário inventar novas regras", profile: "I" } ] },
+            { question: "14. Eu sempre gostei de...", options: [ { text: "Explorar", profile: "I" }, { text: "Evitar surpresas", profile: "O" }, { text: "Focalizar a meta", profile: "A" }, { text: "Realizar uma abordagem natural", profile: "C" } ] },
+            { question: "15. Eu gosto de mudanças se...", options: [ { text: "Me der uma vantagem competitiva", profile: "A" }, { text: "For divertido e puder ser compartilhado", profile: "C" }, { text: "Me der mais liberdade e variedade", profile: "I" }, { text: "Melhorar ou me der mais controle", profile: "O" } ] },
+            { question: "16. Não existe nada de errado em...", options: [ { text: "Se colocar na frente", profile: "A" }, { text: "Colocar os outros na frente", profile: "C" }, { text: "Mudar de ideia", profile: "I" }, { text: "Ser consistente", profile: "O" } ] },
+            { question: "17. Eu gosto de buscar conselhos de...", options: [ { text: "Pessoas bem-sucedidas", profile: "A" }, { text: "Anciãos e conselheiros", profile: "C" }, { text: "Autoridades no assunto", profile: "O" }, { text: "Lugares, os mais estranhos", profile: "I" } ] },
+            { question: "18. Meu lema é...", options: [ { text: "Fazer o que precisa ser feito", profile: "A" }, { text: "Fazer bem feito", profile: "O" }, { text: "Fazer junto com o grupo", profile: "C" }, { text: "Simplesmente fazer", profile: "I" } ] },
+            { question: "19. Eu gosto de...", options: [ { text: "Complexidade, mesmo que confuso", profile: "I" }, { text: "Ordem e sistematização", profile: "O" }, { text: "Calor humano e animação", profile: "C" }, { text: "Coisas claras e simples", profile: "A" } ] },
+            { "question": "20. Tempo para mim é...", "options": [ { text: "Algo que detesto desperdiçar", profile: "A" }, { text: "Um grande ciclo", profile: "C" }, { text: "Uma flecha que leva ao inevitável", profile: "O" }, { text: "Irrelevante", profile: "I" } ] },
+            { "question": "21. Se eu fosse bilionário...", "options": [ { text: "Faria doações para muitas entidades", profile: "C" }, { text: "Criaria uma poupança avantajada", profile: "O" }, { text: "Faria o que desse na cabeça", profile: "I" }, { text: "Exibiria bastante com algumas pessoas", profile: "A" } ] },
+            { "question": "22. Eu acredito que...", "options": [ { text: "O destino é mais importante que a jornada", profile: "A" }, { text: "A jornada é mais importante que o destino", profile: "C" }, { text: "Um centavo economizado é um centavo ganho", profile: "O" }, { text: "Bastam um navio e uma estrela para navegar", profile: "I" } ] },
+            { "question": "23. Eu acredito também que...", "options": [ { text: "Aquele que hesita está perdido", profile: "A" }, { text: "De grão em grão a galinha enche o papo", profile: "O" }, { text: "O que vai, volta", profile: "C" }, { text: "Um sorriso ou uma careta é o mesmo para quem é cego", profile: "I" } ] },
+            { "question": "24. Eu acredito ainda que...", "options": [ { text: "É melhor prudência do que arrependimento", profile: "O" }, { text: "A autoindulgência é perdoável", profile: "I" }, { text: "O saber é fundamental", profile: "A" }, { text: "O coletivo é mais importante do que o individual", profile: "C" } ] },
+            { "question": "25. Eu penso que...", "options": [ { text: "Não é fácil ficar encurralado", profile: "A" }, { text: "É preferível olhar, antes de pular", profile: "O" }, { text: "Duas cabeças pensam melhor do que uma", profile: "C" }, { text: "Se você não tem condições de competir, não compita", profile: "I" } ] }
+        ];
+        const vakTestQuestions = [
+            { series: 'V', text: "Escrevo listas daquilo que tenho de fazer." }, { series: 'V', text: "Realizo coisas desde que as instruções escritas sejam bem detalhadas." }, { series: 'V', text: "Gosto de fazer palavras cruzadas." }, { series: 'V', text: "Gosto de exposições e de museus." }, { series: 'V', text: "Localizo-me com facilidade, numa cidade nova, se eu tiver um mapa." }, { series: 'V', text: "Todos os meses assisto a uns filmes." }, { series: 'V', text: "Não tenho boa impressão de alguém, se estiver mal vestido." }, { series: 'V', text: "Gosto de observar as pessoas." }, { series: 'V', text: "Acho que flores realmente embelezam a casa e o escritório." }, { series: 'V', text: "Mando consertar os arranhões do meu carro o mais rápido possível." },
+            { series: 'AU', text: "Gosto de longas conversas." }, { series: 'AU', text: "Gosto de programas de entrevistas, no rádio e na tv." }, { series: 'AU', text: "Sou bom ouvinte." }, { series: 'AU', text: "Prefiro os noticiários de rádio e TV do que jornais e revistas." }, { series: 'AU', text: "Sinto-me mal quando meu carro faz algum barulho diferente." }, { series: 'AU', text: "Quando ouço música presto muita atenção à letra." }, { series: 'AU', text: "Posso dizer muito sobre alguém somente pelo seu tom de voz." }, { series: 'AU', text: "Prefiro fazer uma palestra a escrever sobre um assunto." }, { series: 'AU', text: "As pessoas dizem que, às vezes, falo demais." }, { series: 'AU', text: "Costumo conversar comigo mesmo ou com meu gato/cão." },
+            { series: 'K', text: "Quando ouço música, não consigo deixar de mexer as mãos e os pés." }, { series: 'K', text: "Gosto muito de estar ao ar livre." }, { series: 'K', text: "Tenho boa coordenação motora." }, { series: 'K', text: "Tenho tendência a ganhar peso." }, { series: 'K', text: "Gosto de criar animais de estimação." }, { series: 'K', text: "Toco as pessoas quando converso." }, { series: 'K', text: "Gosto mais de praticar esportes do que assistir a eles." }, { series: 'K', text: "Adoro banho, piscina, sauna." }, { series: 'K', text: "Gosto de levantar-me e espreguiçar-me com frequência." }, { series: 'K', text: "Posso dizer muito sobre uma pessoa através do seu aperto de mão." }
+        ];
+
+        // --- DICIONÁRIOS DE DADOS ---
+        const profilesData = {
+            A: { name: 'Tubarão', emoji: '🦈', color: 'bg-red-500', description: "Focado em resultados e ação. É direto, assertivo, competitivo e determinado. Gosta de desafios e é rápido na tomada de decisões.", underPressure: "Sob pressão, pode tornar-se impaciente, autoritário e assumir riscos desnecessários para acelerar os resultados." },
+            O: { name: 'Lobo', emoji: '🐺', color: 'bg-gray-500', description: "Organizado, estratégico e detalhista. Gosta de planear, seguir regras e procura a segurança e a qualidade em tudo o que faz.", underPressure: "Tende a tornar-se excessivamente crítico, rígido com as regras e resistente a qualquer mudança de plano." },
+            C: { name: 'Gato', emoji: '🐈', color: 'bg-yellow-500', description: "Comunicativo, sociável e valoriza os relacionamentos. Gosta de trabalhar em equipe, é empático, persuasivo e procura a harmonia.", underPressure: "Evita conflitos a todo o custo, pode ter dificuldade em tomar decisões difíceis e pode prometer mais do que consegue entregar para agradar." },
+            I: { name: 'Águia', emoji: '🦅', color: 'bg-blue-500', description: "Criativo, visionário e intuitivo. Gosta de inovar, pensar no futuro e ter liberdade de ação. É curioso e procura novas possibilidades.", underPressure: "Pode tornar-se desorganizado, perder o foco nos detalhes importantes e ter dificuldade em cumprir rotinas." },
+        };
+        const vakProfileData = {
+            V: { name: "Visual", emoji: "👁️", color: 'bg-sky-500', description: "Pessoas com canal visual dominante são ligadas à estética, formas e detalhes. Processam o mundo através do que veem, preferindo gráficos e demonstrações a longos textos. Para elas, é preciso 'ver para crer'." },
+            AU: { name: "Auditivo", emoji: "👂", color: 'bg-teal-500', description: "Pessoas com canal auditivo dominante valorizam o diálogo, o bom senso e a lógica dos argumentos. Aprendem e se comunicam melhor ao ouvir e falar, e são sensíveis ao tom de voz e à clareza da mensagem." },
+            K: { name: "Cinestésico", emoji: "🖐️", color: 'bg-orange-500', description: "Pessoas com canal cinestésico dominante processam o mundo através de sensações, movimento e da prática. Valorizam o conforto, o bem-estar e aprendem fazendo, experimentando e sentindo as coisas." }
+        };
+        const profileCombinations = {
+            'A-O': { title: "Executor Estratégico", desc: "A sua determinação de Tubarão é equilibrada pela organização do Lobo. Você não apenas alcança metas, mas fá-lo de forma planeada e com alta qualidade, sendo ideal para liderar projetos complexos." },
+            'A-C': { title: "Líder Carismático", desc: "A força do Tubarão, combinada com a comunicação do Gato, cria um líder que inspira. Você motiva equipes a alcançar resultados ambiciosos, mantendo um ambiente positivo e colaborativo." },
+            'A-I': { title: "Pioneiro Visionário", desc: "A sua ousadia de Tubarão é potencializada pela criatividade da Águia. Você é excelente a transformar ideias inovadoras em negócios concretos, liderando o caminho em novos mercados." },
+            'O-A': { title: "Organizador Eficiente", desc: "Com a meticulosidade do Lobo e a praticidade do Tubarão, você cria sistemas e processos que entregam resultados consistentes e de alta performance." },
+            'O-C': { title: "Planeador Colaborativo", desc: "A organização do Lobo e a habilidade de relacionamento do Gato fazem de si um pilar para a equipe. Você estrutura o trabalho e garante que todos estejam engajados e em harmonia." },
+            'O-I': { title: "Arquiteto Inovador", desc: "A visão da Águia encontra a precisão do Lobo. Você é capaz de desenhar soluções criativas e garantir que elas sejam implementadas com perfeição e atenção aos detalhes." },
+            'C-A': { title: "Negociador Persuasivo", desc: "O seu carisma de Gato, apoiado pela assertividade do Tubarão, torna-o um negociador nato, excelente a fechar acordos e a construir parcerias estratégicas." },
+            'C-O': { title: "Gestor de Pessoas", desc: "A empatia do Gato com a ordem do Lobo cria um gestor que cuida da equipe e dos processos. Você constrói equipes fortes e garante que o trabalho flui de maneira organizada." },
+            'C-I': { title: "Comunicador Criativo", desc: "A criatividade da Águia com o talento de comunicação do Gato torna-o ideal para marketing e criação. Você tem ideias brilhantes e sabe como apresentá-las de forma cativante." },
+            'I-A': { title: "Estrategista Ousado", desc: "A visão de futuro da Águia com a execução do Tubarão permite que você defina metas ambiciosas e trace o caminho mais rápido para alcançá-las, inspirando todos ao redor." },
+            'I-O': { title: "Inventor Metódico", desc: "A sua mente criativa de Águia é fundamentada pela lógica do Lobo. Você não apenas tem grandes ideias, mas também desenvolve o passo a passo para que elas se tornem realidade." },
+            'I-C': { title: "Inspirador de Equipas", desc: "A visão da Águia com o carisma do Gato torna-o um líder que inspira pelo exemplo. Você une as pessoas em torno de um propósito inovador e motiva-as a colaborar." },
+        };
+        const allFunctionsData = {
+            'Vendas': { A: { s: 'Foco em metas e competitividade para fechar negócios.', w: 'Impaciência na negociação pode levar a perder detalhes.' }, O: { s: 'Organização do funil de vendas e follow-up preciso.', w: 'Lentidão para se adaptar a novas abordagens de venda.' }, C: { s: 'Criação de rapport e relacionamento com o cliente.', w: 'Dificuldade em pressionar para o fecho da venda.' }, I: { s: 'Busca por novos mercados e formas criativas de vender.', w: 'Falta de consistência no processo de vendas.' } },
+            'RH': { A: { s: 'Foco em métricas e resultados para a área.', w: 'Baixa empatia em situações de conflito humano.' }, O: { s: 'Criação de processos de RH justos e organizados.', w: 'Burocracia excessiva que limita a gestão de pessoas.' }, C: { s: 'Excelente comunicação interna e gestão de clima.', w: 'Dificuldade em tomar decisões impopulares, como demissões.' }, I: { s: 'Inovação em programas de desenvolvimento e engajamento.', w: 'Falta de atenção às políticas e regras trabalhistas.' } },
+            'Orçamento': { A: { s: 'Foco em cortar custos para atingir metas financeiras.', w: 'Pode cortar custos essenciais sem uma análise profunda.' }, O: { s: 'Atenção aos detalhes para garantir a precisão orçamental.', w: 'Rigidez excessiva perante imprevistos ou necessidades de ajuste.' }, C: { s: 'Habilidade de negociação com departamentos para definir orçamentos justos.', w: 'Dificuldade em ser firme e dizer "não" a pedidos extraorçamentais.' }, I: { s: 'Visão para alocar recursos em projetos inovadores e de crescimento.', w: 'Pode subestimar os custos reais de implementação de novas ideias.' } },
+            'Assistência Técnica': { A: { s: 'Agilidade para diagnosticar e resolver problemas rapidamente.', w: 'Falta de paciência para ouvir toda a reclamação do cliente.' }, O: { s: 'Segue um método passo a passo para garantir que nada falhe.', w: 'Dificuldade em improvisar quando o problema é totalmente novo.' }, C: { s: 'Empatia e paciência para acalmar clientes frustrados e garantir a satisfação.', w: 'Pode absorver a frustração do cliente e prometer soluções inviáveis.' }, I: { s: 'Pensa em soluções criativas e fora da caixa para os problemas técnicos.', w: 'Pode complicar soluções que poderiam ser mais simples e diretas.' } },
+            'Startup': { A: { s: 'Foco agressivo no crescimento rápido e na conquista de mercado.', w: 'Risco de esgotar a equipe e os recursos na ânsia por resultados.' }, O: { s: 'Criação de uma base sólida de processos desde o início.', w: 'Lentidão na adaptação, o que pode ser fatal num ambiente de startup.' }, C: { s: 'Criação de uma cultura de equipe forte e de uma boa rede de contactos.', w: 'Foco excessivo na harmonia, evitando conflitos necessários ao crescimento.' }, I: { s: 'Visão disruptiva para criar algo verdadeiramente novo no mercado.', w: 'Dificuldade em focar num único produto ou serviço (MVP).' } },
+            'Projetos': { A: { s: 'Garantia de entrega no prazo e foco no resultado final.', w: 'Pressionar a equipe excessivamente, ignorando o bem-estar.' }, O: { s: 'Planeamento detalhado, controlo de escopo e de riscos.', w: 'Falta de flexibilidade para lidar com mudanças inesperadas no projeto.' }, C: { s: 'Manter a equipe unida e comunicativa durante todo o projeto.', w: 'Evitar conversas difíceis sobre prazos e responsabilidades.' }, I: { s: 'Trazer soluções criativas para os problemas que surgem no projeto.', w: 'Perder o foco nos detalhes críticos da execução.' } },
+            'Programador': { A: { s: 'Entrega rápida de funcionalidades (sprints agressivos).', w: 'A qualidade do código pode ser sacrificada pela velocidade.' }, O: { s: 'Lógica e método para criar código limpo e bem documentado.', w: 'Resistência a adotar novas tecnologias ou frameworks.' }, C: { s: 'Excelente em pair programming e colaboração com a equipe.', w: 'Dificuldade em trabalhar focado por longos períodos sozinho.' }, I: { s: 'Gosta de experimentar novas arquiteturas e tecnologias.', w: 'Pode criar soluções demasiado complexas para problemas simples.' } },
+            'Montagem': { A: { s: 'Foco em atingir as metas de produção diárias a todo o custo.', w: 'Pode ignorar pequenos erros de qualidade para não parar a linha.' }, O: { s: 'Segue os procedimentos de montagem com máxima precisão e rigor.', w: 'Baixa velocidade e dificuldade em adaptar-se a mudanças no processo.' }, C: { s: 'Ajuda a manter o bom ambiente e o espírito de equipe na linha de produção.', w: 'Pode distrair-se com conversas, diminuindo a produtividade.' }, I: { s: 'Propõe melhorias e novas formas de otimizar a montagem.', w: 'Impaciência com a natureza repetitiva do trabalho.' } },
+            'Estoque': { A: { s: 'Agilidade para acelerar a entrada e saída de materiais.', w: 'Risco de erros de contagem devido à pressa.' }, O: { s: 'Controlo e organização impecável do inventário.', w: 'Burocracia excessiva para a retirada de materiais.' }, C: { s: 'Bom relacionamento com as equipes que dependem do estoque.', w: 'Dificuldade em ser rigoroso com as regras de retirada.' }, I: { s: 'Pensa em novos sistemas de automação para o estoque.', w: 'Pode desorganizar o sistema atual ao tentar implementar algo novo.' } },
+            'PCP': { A: { s: 'Foco em garantir que a produção cumpra as metas agressivas.', w: 'Cria planos irrealistas que pressionam a equipe.' }, O: { s: 'Planeamento detalhado e preciso da produção.', w: 'Planos muito rígidos e com pouca margem para imprevistos.' }, C: { s: 'Comunicação eficiente entre produção, vendas e estoque.', w: 'Tenta agradar a todos, criando planos com prazos frouxos.' }, I: { s: 'Visão para planear a introdução de novos produtos na linha.', w: 'Falta de atenção aos detalhes operacionais do dia a dia.' } },
+            'Qualidade': { A: { s: 'Foco em resolver rapidamente os problemas de qualidade.', w: 'Pode aprovar soluções "suficientes", mas não ideais.' }, O: { s: 'Busca pela perfeição e criação de padrões de qualidade rigorosos.', w: 'Perfeccionismo que pode atrasar a libertação de produtos.' }, C: { s: 'Boa comunicação para treinar as equipes em padrões de qualidade.', w: 'Dificuldade em apontar falhas diretamente aos colegas.' }, I: { s: 'Pensa em novas formas de garantir a qualidade (automação, IA).', w: 'Pode ignorar os métodos de teste tradicionais e essenciais.' } },
+            'Faturamento': { A: { s: 'Agilidade para garantir que as faturas sejam emitidas e pagas rapidamente.', w: 'Risco de erros nos detalhes por causa da pressa.' }, O: { s: 'Precisão absoluta nos valores e dados fiscais.', w: 'Processo lento e burocrático que pode atrasar o faturamento.' }, C: { s: 'Bom relacionamento com clientes para a cobrança amigável.', w: 'Dificuldade em ser incisivo com clientes inadimplentes.' }, I: { s: 'Busca por novas plataformas e automações para o processo.', w: 'Pode complicar um processo que precisa de ser simples e seguro.' } },
+            'P&D': { A: { s: 'Foco em transformar a pesquisa num produto vendável rapidamente.', w: 'Pode apressar a fase de pesquisa, pulando etapas importantes.' }, O: { s: 'Método científico rigoroso na pesquisa e documentação.', w: 'Pode ficar preso na fase de pesquisa por demasiado tempo (paralisia por análise).' }, C: { s: 'Colaboração com outras equipes para entender as necessidades do mercado.', w: 'Pode ser influenciado por opiniões em vez de dados concretos.' }, I: { s: 'Criatividade e curiosidade para explorar territórios desconhecidos.', w: 'Dificuldade em focar a pesquisa numa direção com potencial comercial.' } },
+            'Líder': { A: { s: 'Liderança diretiva, focada em entregar metas.', w: 'Microgestão e falta de delegação de poder.' }, O: { s: 'Liderança pelo exemplo, com organização e método.', w: 'Resistência a novas ideias vindas da equipe.' }, C: { s: 'Liderança servidora, que apoia e desenvolve a equipe.', w: 'Falta de assertividade para cobrar resultados e dar feedbacks.' }, I: { s: 'Liderança inspiradora, que motiva pela visão e propósito.', w: 'Comunicação vaga e falta de clareza nas direções.' } },
+            'CEO': { A: { s: 'Foco agressivo em crescimento e resultados financeiros.', w: 'Ignorar a cultura da empresa e o bem-estar dos colaboradores.' }, O: { s: 'Criação de uma empresa sólida, com processos e governança.', w: 'Lentidão para tomar decisões estratégicas ousadas.' }, C: { s: 'Ser o principal porta-voz e motivador da empresa.', w: 'Dificuldade em tomar decisões puramente racionais e duras.' }, I: { s: 'Liderar a empresa com uma visão de futuro e inovação.', w: 'Distanciar-se da realidade operacional e financeira do negócio.' } },
+        };
+        const interactionTips = {
+            A: { O: { synergy: "A sua determinação acelera a execução, enquanto a organização do Lobo garante a qualidade.", attention: "Respeite a necessidade de planeamento do Lobo, evitando pressionar por decisões apressadas." }, C: { synergy: "Você define a direção e a meta, enquanto o Gato engaja e motiva a equipe.", attention: "Cuidado para não parecer demasiado autoritário, o que pode desmotivar o Gato." }, I: { synergy: "A visão inovadora da Águia, combinada com a sua capacidade de execução, transforma ideias em realidade.", attention: "Dê liberdade criativa à Águia, sem microgerir." } },
+            O: { A: { synergy: "A sua organização garante a qualidade, enquanto a determinação do Tubarão acelera a execução.", attention: "Entenda a necessidade de agilidade do Tubarão e foque-se nos dados essenciais." }, C: { synergy: "Você estrutura o trabalho, enquanto o Gato mantém a equipe unida e motivada.", attention: "Seja mais aberto à flexibilidade que o Gato traz." }, I: { synergy: "A visão criativa da Águia, combinada com o seu método, permite que grandes ideias sejam implementadas.", attention: "Esteja aberto às novas abordagens da Águia, mesmo que fujam ao plano." } },
+            C: { A: { synergy: "O seu carisma engaja a equipe, enquanto a força do Tubarão garante o foco nos resultados.", attention: "Seja mais direto na comunicação com o Tubarão, especialmente em feedbacks." }, O: { synergy: "Você mantém a equipe unida, enquanto o Lobo estrutura o trabalho e alinha a todos.", attention: "Valorize a importância dos processos que o Lobo define." }, I: { synergy: "A sua capacidade de comunicação, unida à criatividade da Águia, é ideal para marketing e inovação.", attention: "Ajude a Águia a manter o foco e a comunicar as suas ideias de forma clara." } },
+            I: { A: { synergy: "A sua visão inovadora, combinada com a execução do Tubarão, transforma ideias em realidade.", attention: "Traduza as suas visões em planos com metas claras para que o Tubarão possa agir." }, O: { synergy: "A sua visão criativa, combinada com o método do Lobo, permite implementar grandes ideias.", attention: "Respeite a importância da análise de riscos que o Lobo faz." }, C: { synergy: "A sua visão inovadora, combinada com o carisma do Gato, inspira e une as pessoas.", attention: "Comunique as suas ideias de forma clara para que o Gato possa engajar a equipe." } }
+        };
+        const developmentPlanData = {
+            A: { O: { intro: "Sua força está na ação (Tubarão 🦈), mas pode beneficiar da organização do Lobo (🐺).", actions: ["Dedique 15 minutos para delinear um plano antes de um projeto.", "Peça a um colega metódico para rever seu plano.", "Tente seguir uma rotina matinal por uma semana."] }, C: { intro: "Sua determinação (Tubarão 🦈) é poderosa. Desenvolver a empatia (Gato 🐈) o tornará um líder completo.", actions: ["Na próxima reunião, proponha-se a ouvir mais do que fala.", "Elogie publicamente um colega esta semana.", "Pergunte como alguém está antes de pedir algo."] }, I: { intro: "Seu foco em resultados (Tubarão 🦈) é excecional. Equilibre-o com a visão da Águia (🦅).", actions: ["Reserve 30 minutos por semana para pensar em novas tendências.", "Pense em três soluções 'fora da caixa' para um problema.", "Pergunte 'E se...?' mais vezes nas discussões."] } },
+            O: { A: { intro: "Sua organização (Lobo 🐺) é impecável. O desafio é aumentar a velocidade de decisão (Tubarão 🦈).", actions: ["Dê a si mesmo um prazo de 5 minutos para sua próxima pequena decisão.", "Aceite o 'bom o suficiente' em vez de 100% dos dados.", "Delegue uma pequena tarefa a um colega."] }, C: { intro: "Sua atenção ao detalhe (Lobo 🐺) é uma força. Fortaleça suas competências de relacionamento (Gato 🐈).", actions: ["Participe numa conversa informal com colegas.", "Ofereça ajuda a um colega num projeto.", "Comece um feedback reconhecendo um ponto positivo."] }, I: { intro: "Seu método (Lobo 🐺) garante qualidade. Abrace um pouco da criatividade da Águia (🦅).", actions: ["Questione: 'Qual seria a forma diferente de fazer isto?'.", "Consuma conteúdo fora da sua área de especialização.", "Reserve tempo para brainstorming sem julgamento."] } },
+            C: { A: { intro: "Sua capacidade de conectar pessoas (Gato 🐈) é um dom. O desafio é ser mais assertivo (Tubarão 🦈).", actions: ["Na próxima reunião, seja o primeiro a partilhar sua opinião.", "Diga 'não' a um pequeno pedido não prioritário.", "Expresse uma opinião, mesmo que discorde da maioria."] }, O: { intro: "Seu talento para colaboração (Gato 🐈) é excecional. Adicione mais estrutura (Lobo 🐺) ao seu trabalho.", actions: ["Liste as 3 tarefas mais importantes do dia e foque-se nelas.", "Organize seus ficheiros digitais ou sua área de trabalho.", "Crie um checklist para uma tarefa repetitiva."] }, I: { intro: "Sua empatia (Gato 🐈) une as pessoas. Potencie-a com a visão de futuro da Águia (🦅).", actions: ["Pergunte à equipe: 'O que poderíamos estar a fazer daqui a 6 meses?'.", "Partilhe uma ideia inovadora com seu gestor.", "Assista a uma palestra online sobre o futuro da sua indústria."] } },
+            I: { A: { intro: "Sua criatividade (Águia 🦅) gera ideias brilhantes. O desafio é traduzi-las em resultados (Tubarão 🦈).", actions: ["Para sua próxima ideia, defina uma ação executável em 24 horas.", "Peça a um colega focado em resultados para tornar sua ideia mais prática.", "Defina uma métrica simples para medir o sucesso da ideia."] }, O: { intro: "Sua visão (Águia 🦅) é inspiradora. Dê mais atenção aos detalhes (Lobo 🐺).", actions: ["Reveja seu último email à procura de erros antes de enviar.", "Crie um cronograma com pequenas etapas para uma de suas ideias.", "Peça a um colega orientado para os detalhes para rever seu trabalho."] }, C: { intro: "Suas grandes ideias (Águia 🦅) são uma força. Desenvolva a capacidade de as 'vender' (Gato 🐈).", actions: ["'Venda' sua próxima ideia a um colega, focando-se nos benefícios.", "Crie um grupo de brainstorming para evoluir uma ideia em conjunto.", "Pergunte ativamente o que os outros pensam das suas ideias."] } }
+        };
+
+        const integratedProfiles = {
+            'A-V': { title: "O Realizador Focado", superpower: "Execução Visual", desc: "Você combina a determinação do Tubarão com a clareza do canal Visual. Precisa visualizar o caminho até os resultados. Gráficos e metas claras são seu combustível.", comms: "Comunique-se com você através de dados visuais e demonstrações. Você é mais eficaz ao usar apresentações e protótipos.", challenge: "Não se prender apenas ao que pode ser visto, negligenciando a intuição (Cinestésico) ou os insights de uma boa conversa (Auditivo)." },
+            'A-AU': { title: "O Comandante Direto", superpower: "Liderança Assertiva", desc: "Sua força de Tubarão é canalizada pela comunicação Auditiva. Você lidera com clareza, objetividade e comandos verbais diretos.", comms: "Comunique-se com você de forma direta e lógica. Você brilha ao dar ordens claras e negociar.", challenge: "Sua franqueza pode, por vezes, soar ríspida. É preciso equilibrar a objetividade com a escuta ativa." },
+            'A-K': { title: "O Impulsor Prático", superpower: "Ação Instintiva", desc: "Você é a personificação do 'mão na massa'. A energia do Tubarão e a intuição do Cinestésico o tornam imparável na execução.", comms: "Para se conectar com você, é preciso demonstrar na prática. Você se expressa melhor através da ação e do exemplo.", challenge: "O planejamento pode ficar em segundo plano. É crucial pausar e estruturar o plano antes de sair executando." },
+            'O-V': { title: "O Arquiteto Detalhista", superpower: "Organização Visual", desc: "A meticulosidade do Lobo se une à percepção Visual. Você enxerga a estrutura em tudo e precisa de planos e checklists.", comms: "Apresente informações de forma estruturada: tabelas e fluxogramas. Você se destaca ao criar sistemas visuais de organização.", challenge: "O excesso de detalhes pode levar à 'paralisia por análise'. Confie que um plano 80% detalhado já é suficiente." },
+            'O-AU': { title: "O Analista Lógico", superpower: "Raciocínio Estruturado", desc: "Você une a organização do Lobo com a clareza do canal Auditivo. Seu pensamento é linear e baseado em fatos.", comms: "Para falar com você, seja claro, sequencial e apresente os fatos. Você é excelente em explicar regras e procedimentos.", challenge: "Pode ter dificuldade com a ambiguidade. Aprender a flexibilizar seus planos enriquece sua análise." },
+            'O-K': { title: "O Artesão Metódico", superpower: "Qualidade Prática", desc: "A precisão do Lobo se manifesta através do fazer (Cinestésico). Você precisa sentir a qualidade do processo e do produto.", comms: "Para te convencer, permita que você experimente e teste. Você se comunica melhor através de demonstrações práticas.", challenge: "Pode ser resistente a novos métodos que não pôde experimentar. Abraçar a experimentação acelera sua adaptação." },
+            'C-V': { title: "O Anfitrião Atencioso", superpower: "Harmonia Visual", desc: "A empatia do Gato é reforçada pela atenção aos detalhes do canal Visual. Você percebe a linguagem corporal e cria ambientes harmoniosos.", comms: "Um sorriso e um ambiente organizado são essenciais para você. Você se comunica bem criando apresentações acolhedoras.", challenge: "Pode se preocupar excessivamente com as aparências, deixando o conteúdo em segundo plano." },
+            'C-AU': { title: "O Conector Eloquente", superpower: "Comunicação Empática", desc: "Você é um mestre da comunicação. A sociabilidade do Gato e a escuta do Auditivo o tornam um excelente ouvinte e contador de histórias.", comms: "Para falar com você, use um tom de voz amigável e demonstre interesse. Você é imbatível em resolver conflitos e motivar pessoas.", challenge: "Pode evitar conversas difíceis para não gerar conflito. Desenvolver a assertividade é seu ponto de crescimento." },
+            'C-K': { title: "O Apoiador Confiável", superpower: "Vínculo Genuíno", desc: "A necessidade de conexão do Gato se manifesta fisicamente. Você valoriza o contato, o conforto e o bem-estar da equipe.", comms: "Um aperto de mão firme e um ambiente confortável são cruciais. Você se destaca em garantir que a equipe se sinta segura.", challenge: "Pode ter dificuldade em impor limites e dizer 'não', absorvendo a carga emocional dos outros." },
+            'I-V': { title: "O Visionário Inspirador", superpower: "Visualização Criativa", desc: "A criatividade da Águia se une à capacidade de enxergar o futuro do canal Visual. Você pensa em imagens, mind maps e conceitos.", comms: "Use metáforas visuais e protótipos para falar com você. Você inspira os outros ao desenhar o futuro em um quadro branco.", challenge: "Pode se desconectar da realidade. É preciso 'aterrissar' as ideias com planos de ação visíveis." },
+            'I-AU': { title: "O Idealista Persuasivo", superpower: "Discurso Inovador", desc: "Suas ideias inovadoras (Águia) ganham vida através da palavra (Auditivo). Você é um excelente comunicador de novas ideias.", comms: "Para te engajar, discuta ideias e possibilidades futuras. Você se destaca em brainstormings e palestras.", challenge: "Pode se apaixonar mais pela ideia do que pela sua execução. É fundamental ouvir os 'como'." },
+            'I-K': { title: "O Explorador Intuitivo", superpower: "Inovação Experimental", desc: "A curiosidade da Águia se une à necessidade de experimentar do Cinestésico. Você é um pioneiro que aprende fazendo e desbravando.", comms: "Dê a você a liberdade para experimentar e prototipar. Você se comunica melhor mostrando um projeto piloto.", challenge: "A falta de paciência com rotinas pode gerar caos. É preciso documentar suas descobertas." }
+        };
+
+        // --- VARIÁVEIS DE ESTADO ---
+        let currentQuestionIndex = 0, currentTest = null, currentAnswers = [], currentQuestions = [], lastResults = {};
+        let storedProfileScores = {}, storedVakScores = {};
+        let clickSynth, successSynth;
+        let radarChartInstance;
+        
+        // --- ELEMENTOS DO DOM ---
+        const startScreen = document.getElementById('start-screen'), quizScreen = document.getElementById('quiz-screen'), analyzingScreen = document.getElementById('analyzing-screen'), resultsScreen = document.getElementById('results-screen'), transitionScreen = document.getElementById('transition-screen'), startBtn = document.getElementById('start-btn'), nameInput = document.getElementById('name-input'), startIconsContainer = document.getElementById('start-icons-container'), analyzingIconsContainer = document.getElementById('analyzing-icons-container'), questionContainer = document.getElementById('question-container'), questionCounter = document.getElementById('question-counter'), totalQuestions = document.getElementById('total-questions'), progressBar = document.getElementById('progress-bar'), prevBtn = document.getElementById('prev-btn'), nextBtn = document.getElementById('next-btn'), themeToggle = document.getElementById('theme-toggle'), sunIcon = document.getElementById('theme-icon-sun'), moonIcon = document.getElementById('theme-icon-moon'), validationModal = document.getElementById('validation-modal'), modalMessage = document.getElementById('modal-message'), modalCloseBtn = document.getElementById('modal-close-btn'), quizTitle = document.getElementById('quiz-title'), startVakBtn = document.getElementById('start-vak-btn'), functionModal = document.getElementById('function-modal'), functionModalTitle = document.getElementById('function-modal-title'), functionModalStrengths = document.getElementById('function-modal-strengths'), functionModalWeaknesses = document.getElementById('function-modal-weaknesses'), functionModalCloseBtn = document.getElementById('function-modal-close-btn'), interactionModal = document.getElementById('interaction-modal'), interactionModalTitle = document.getElementById('interaction-modal-title'), interactionModalSynergy = document.getElementById('interaction-modal-synergy'), interactionModalAttention = document.getElementById('interaction-modal-attention'), interactionModalCloseBtn = document.getElementById('interaction-modal-close-btn'), passwordModal = document.getElementById('password-modal'), adminBtn = document.getElementById('admin-btn'), passwordInput = document.getElementById('password-input'), passwordCancelBtn = document.getElementById('password-cancel-btn'), passwordSubmitBtn = document.getElementById('password-submit-btn'), answerKeyScreen = document.getElementById('answer-key-screen'), closeAnswerKeyBtn = document.getElementById('close-answer-key-btn');
+
+        // --- FUNÇÕES DE CONTROLE ---
+        function initAudio() {
+            if (typeof Tone !== 'undefined' && !clickSynth) {
+                clickSynth = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } }).toDestination();
+                successSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'fatsawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 } }).toDestination();
+            }
+        }
+        function playClickSound() { if (clickSynth && Tone.context.state === 'running') clickSynth.triggerAttackRelease('C5', '8n'); }
+        function playSuccessSound() { if (successSynth && Tone.context.state === 'running') successSynth.triggerAttackRelease(['C4', 'E4', 'G4', 'C5'], '8n', Tone.now()); }
+
+        function showScreen(screen) {
+            [startScreen, quizScreen, analyzingScreen, resultsScreen, transitionScreen, answerKeyScreen].forEach(s => s.classList.add('hidden'));
+            screen.classList.remove('hidden');
+        }
+        
+        function startTest(testType) {
+            currentTest = testType;
+            if (testType === 'profile') {
+                currentQuestions = profileTestQuestions;
+                currentAnswers = new Array(profileTestQuestions.length).fill(null);
+                quizTitle.textContent = "Etapa 1: Perfil Comportamental";
+            } else { // VAK test
+                currentQuestions = vakTestQuestions;
+                currentAnswers = new Array(vakTestQuestions.length).fill(null);
+                quizTitle.textContent = "Etapa 2: Canais de Comunicação";
+            }
+            currentQuestionIndex = 0;
+            totalQuestions.textContent = currentQuestions.length;
+            showScreen(quizScreen);
+            showQuestion(currentQuestionIndex);
+        }
+
+        function showQuestion(index) {
+            const q = currentQuestions[index];
+            if (currentTest === 'profile') {
+                const questionText = q.question.substring(q.question.indexOf('.') + 1).trim();
+                questionContainer.innerHTML = `<div class="question-card bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg text-center"><h2 class="text-2xl sm:text-3xl font-bold mb-8">${questionText}</h2><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${q.options.map((option, i) => `<div><input type="radio" name="question${index}" id="q${index}o${i}" value="${option.profile}" class="hidden peer" ${currentAnswers[index] === option.profile ? 'checked' : ''}><label for="q${index}o${i}" class="block cursor-pointer p-5 border border-gray-300 dark:border-gray-600 rounded-xl text-center transition-all duration-200 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 peer-checked:shadow-lg peer-checked:scale-105 hover:border-blue-500 dark:hover:border-blue-400">${option.text}</label></div>`).join('')}</div></div>`;
+                document.querySelectorAll(`input[name="question${index}"]`).forEach(radio => radio.addEventListener('change', (e) => { playClickSound(); currentAnswers[index] = e.target.value; setTimeout(handleNext, 200); }));
+            } else { // VAK test
+                 questionContainer.innerHTML = `<div class="question-card bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg text-center"><h2 class="text-2xl sm:text-3xl font-bold mb-8">${q.text}</h2><div class="flex justify-center gap-6">${['Sim', 'Não'].map((label, i) => `<div><input type="radio" name="question${index}" id="q${index}o${i}" value="${label === 'Sim' ? q.series : 'N'}" class="hidden peer" ${currentAnswers[index] === (label === 'Sim' ? q.series : 'N') ? 'checked' : ''}><label for="q${index}o${i}" class="block cursor-pointer px-10 py-5 border border-gray-300 dark:border-gray-600 rounded-xl text-center transition-all duration-200 peer-checked:bg-teal-600 peer-checked:text-white peer-checked:border-teal-600 peer-checked:shadow-lg peer-checked:scale-105 hover:border-teal-500 dark:hover:border-teal-400 text-xl">${label}</label></div>`).join('')}</div></div>`;
+                document.querySelectorAll(`input[name="question${index}"]`).forEach(radio => radio.addEventListener('change', (e) => { playClickSound(); currentAnswers[index] = e.target.value; setTimeout(handleNext, 200); }));
+            }
+            updateProgress(); updateNavigation();
+        }
+
+        function updateProgress() { const answeredCount = currentAnswers.filter(a => a !== null).length; const progress = (answeredCount / currentQuestions.length) * 100; progressBar.style.width = `${progress}%`; questionCounter.textContent = currentQuestionIndex + 1; }
+        
+        function updateNavigation() {
+            prevBtn.disabled = currentQuestionIndex === 0;
+            prevBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+            const isLastQuestion = currentQuestionIndex === currentQuestions.length - 1;
+            nextBtn.textContent = isLastQuestion ? 'Finalizar' : 'Próxima';
+            nextBtn.classList.toggle('bg-green-600', isLastQuestion);
+            nextBtn.classList.toggle('hover:bg-green-700', isLastQuestion);
+            nextBtn.classList.toggle('bg-blue-600', !isLastQuestion);
+            nextBtn.classList.toggle('hover:bg-blue-700', !isLastQuestion);
+        }
+
+        function handleNext() {
+            if (currentAnswers[currentQuestionIndex] === null) {
+                showModal(validationModal, 'Por favor, selecione uma opção para continuar.');
+                return;
+            }
+            if (currentQuestionIndex < currentQuestions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion(currentQuestionIndex);
+            } else {
+                finishQuiz();
+            }
+        }
+        function handlePrev() { if (currentQuestionIndex > 0) { currentQuestionIndex--; showQuestion(currentQuestionIndex); } }
+        
+        function finishQuiz() {
+            playSuccessSound();
+            if (currentTest === 'profile') {
+                const scores = { 'A': 0, 'O': 0, 'C': 0, 'I': 0 }; 
+                currentAnswers.forEach(answer => { if (answer) scores[answer]++; }); 
+                storedProfileScores = scores;
+                showScreen(transitionScreen);
+            } else { // VAK
+                const scores = { 'V': 0, 'AU': 0, 'K': 0 };
+                currentAnswers.forEach(answer => { if (answer && answer !== 'N') scores[answer]++; });
+                storedVakScores = scores;
+                showScreen(analyzingScreen);
+                setTimeout(() => {
+                    displayIntegratedResults(storedProfileScores, storedVakScores);
+                }, 3000);
+            }
+        }
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            currentAnswers = [];
+            currentTest = null;
+            storedProfileScores = {};
+            storedVakScores = {};
+            showScreen(startScreen);
+        }
+
+        function displayIntegratedResults(profileScores, vakScores) {
+            const name = nameInput.value || "Visitante";
+
+            const sortedProfiles = Object.entries(profileScores).map(([key, score]) => ({ key, score, percentage: ((score / profileTestQuestions.length) * 100) })).sort((a, b) => b.score - a.score);
+            const [dominantProfile, secondaryProfile, , lowestProfile] = sortedProfiles;
+            
+            const sortedVak = Object.entries(vakScores).map(([key, score]) => ({ key, score })).sort((a, b) => b.score - a.score);
+            const dominantVak = sortedVak[0];
+            const dominantVakData = vakProfileData[dominantVak.key];
+            
+            const integratedKey = `${dominantProfile.key}-${dominantVak.key}`;
+            const integratedData = integratedProfiles[integratedKey];
+            const dominantProfileData = profilesData[dominantProfile.key];
+            const secondaryProfileData = profilesData[secondaryProfile.key];
+            
+            const devPlan = developmentPlanData[dominantProfile.key][lowestProfile.key];
+
+            lastResults = { name, integratedData, dominantProfile, sortedProfiles, sortedVak };
+
+            resultsScreen.innerHTML = `
+                <div id="pdf-content" class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-lg w-full animate-fade-in space-y-8">
+                    <div class="text-center">
+                        <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">Análise Integrada de <span class="text-blue-500">${name}</span></h2>
+                        <p class="text-lg font-bold text-gray-700 dark:text-gray-300 mt-2">Seu Perfil: <span class="text-indigo-500">${integratedData.title}</span></p>
+                    </div>
+
+                    <div class="text-center bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h3 class="font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-sm">Seu Superpoder</h3>
+                        <p class="text-2xl font-extrabold text-indigo-500 mt-1">${integratedData.superpower}</p>
+                        <p class="text-gray-700 dark:text-gray-300 mt-2 max-w-3xl mx-auto">${integratedData.desc}</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-2xl font-bold text-center mb-4">Seu Balanço Geral</h3>
+                        <div class="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h4 class="text-lg font-bold text-center mb-4 text-gray-700 dark:text-gray-300">Perfil Comportamental</h4>
+                                <div id="profile-bars-container" class="space-y-3"></div>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-bold text-center mb-4 text-gray-700 dark:text-gray-300">Canais de Comunicação</h4>
+                                <div id="vak-bars-container" class="space-y-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                         <h3 class="text-2xl font-bold text-center mb-4">Visualização em Radar</h3>
+                         <div class="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                            <div class="mx-auto max-w-md h-80">
+                                <canvas id="radarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-2xl font-bold text-center mb-4">Sua Dinâmica Comportamental</h3>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-700">
+                                <h4 class="text-xl font-bold text-blue-800 dark:text-blue-300 mb-3">Perfil Dominante: ${dominantProfileData.name} ${dominantProfileData.emoji}</h4>
+                                <p class="text-gray-700 dark:text-gray-300">${dominantProfileData.description}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <h4 class="text-xl font-bold text-gray-800 dark:text-gray-300 mb-3">Perfil Secundário: ${secondaryProfileData.name} ${secondaryProfileData.emoji}</h4>
+                                <p class="text-gray-700 dark:text-gray-300">${secondaryProfileData.description}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-2xl font-bold text-center mb-4">Sua Forma de Comunicar</h3>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="bg-teal-50 dark:bg-teal-900/20 p-6 rounded-lg border border-teal-200 dark:border-teal-700">
+                                <h4 class="text-xl font-bold text-teal-800 dark:text-teal-300 mb-3">Seu Canal Principal: ${dominantVakData.name} ${dominantVakData.emoji}</h4>
+                                <p class="text-gray-700 dark:text-gray-300">${dominantVakData.description}</p>
+                            </div>
+                            <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-700">
+                                <h4 class="text-xl font-bold text-green-800 dark:text-green-300 mb-3">Comunicação Efetiva</h4>
+                                <p class="text-gray-700 dark:text-gray-300 mb-2"><strong>Para se conectar com você:</strong> ${integratedData.comms}</p>
+                                <p class="text-gray-700 dark:text-gray-300"><strong>Seu principal desafio:</strong> ${integratedData.challenge}</p>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Tabs -->
+                    <div class="w-full">
+                        <h3 class="text-2xl font-bold text-center mb-4">Análises Adicionais</h3>
+                        <div class="border-b border-gray-200 dark:border-gray-700">
+                            <nav id="tabs" class="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
+                                <button data-tab="1" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-blue-600 border-blue-600">Desenvolvimento</button>
+                                <button data-tab="2" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 border-transparent">Interação com Perfis</button>
+                                <button data-tab="3" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 border-transparent">Áreas de Atuação</button>
+                            </nav>
+                        </div>
+                        <div class="py-6">
+                            <div id="tab-panel-1" class="tab-panel space-y-6">
+                                <div class="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg border border-orange-200 dark:border-orange-700">
+                                    <h4 class="text-xl font-bold text-orange-800 dark:text-orange-300 mb-3">Seu Foco de Desenvolvimento</h4>
+                                    <p class="text-gray-700 dark:text-gray-300 mt-2">${devPlan.intro}</p>
+                                    <ul class="text-gray-700 dark:text-gray-300 space-y-2 list-disc list-inside mt-2">
+                                        ${devPlan.actions.map(tip => `<li>${tip}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                            <div id="tab-panel-2" class="tab-panel hidden">
+                                <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg border border-gray-200 dark:border-gray-600">
+                                    <h4 class="text-xl font-bold text-gray-800 dark:text-gray-300 mb-4 text-center">Como você se relaciona com outros perfis</h4>
+                                    <div id="interaction-buttons" class="flex flex-wrap gap-3 justify-center"></div>
+                                </div>
+                            </div>
+                             <div id="tab-panel-3" class="tab-panel hidden">
+                                <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-700">
+                                    <h4 class="text-xl font-bold text-purple-800 dark:text-purple-300 mb-4 text-center">Seus pontos fortes e a melhorar em cada área</h4>
+                                    <div id="functions-container" class="flex flex-wrap gap-3 justify-center"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
+                        <button id="share-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-md transform hover:scale-105 w-full sm:w-auto flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <span id="share-btn-text">Partilhar Imagem</span>
+                        </button>
+                        <button id="download-pdf-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-all duration-300 shadow-md transform hover:scale-105 w-full sm:w-auto">Baixar Relatório</button>
+                        <button id="restart-btn-results" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-all duration-300 shadow-md transform hover:scale-105 w-full sm:w-auto">Refazer Análise</button>
+                    </div>
+                </div>`;
+            
+            // Populate bars
+            const profileBarsContainer = document.getElementById('profile-bars-container');
+            sortedProfiles.forEach(p => {
+                const profile = profilesData[p.key];
+                profileBarsContainer.innerHTML += `
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-base font-medium text-gray-700 dark:text-white">${profile.emoji} ${profile.name}</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-white">${p.percentage.toFixed(0)}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                            <div class="${profile.color} h-2.5 rounded-full" style="width: ${p.percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const vakBarsContainer = document.getElementById('vak-bars-container');
+            sortedVak.forEach(v => {
+                const vak = vakProfileData[v.key];
+                const percentage = v.score * 10; // score is out of 10
+                vakBarsContainer.innerHTML += `
+                     <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-base font-medium text-gray-700 dark:text-white">${vak.emoji} ${vak.name}</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-white">${v.score}/10</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                            <div class="${vak.color} h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            drawRadarChart(sortedProfiles);
+
+            // Populate interaction buttons
+            const interactionContainer = document.getElementById('interaction-buttons');
+            Object.keys(profilesData).filter(key => key !== dominantProfile.key).forEach(key => {
+                const profile = profilesData[key];
+                interactionContainer.innerHTML += `<button data-interaction-key="${key}" class="interaction-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 text-sm font-semibold px-4 py-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-500 transition flex items-center gap-2">${profile.emoji} ${profile.name}</button>`;
+            });
+
+            // Populate function buttons
+            const functionsContainer = document.getElementById('functions-container');
+            Object.keys(allFunctionsData).sort().forEach(funcName => {
+                functionsContainer.innerHTML += `<button data-function-name="${funcName}" class="func-btn bg-purple-100 dark:bg-purple-800 text-purple-800 dark:text-purple-200 text-sm font-semibold px-4 py-2 rounded-full hover:bg-purple-200 dark:hover:bg-purple-700 transition">${funcName}</button>`;
+            });
+            
+            setupEventListeners();
+            showScreen(resultsScreen);
+        }
+        
+        function setupEventListeners() {
+            document.getElementById('restart-btn-results').addEventListener('click', restartQuiz);
+            document.getElementById('download-pdf-btn').addEventListener('click', generatePDF);
+            document.getElementById('share-btn').addEventListener('click', shareResultsAsImage);
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const tabNum = e.target.dataset.tab;
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+                document.getElementById(`tab-panel-${tabNum}`).classList.remove('hidden');
+                
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('text-blue-600', 'border-blue-600');
+                    b.classList.add('text-gray-500', 'hover:text-gray-700', 'border-transparent');
+                });
+                e.target.classList.add('text-blue-600', 'border-blue-600');
+                e.target.classList.remove('text-gray-500', 'hover:text-gray-700', 'border-transparent');
+            }));
+
+            document.querySelectorAll('.func-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const funcName = e.target.dataset.functionName;
+                const dominantKey = lastResults.dominantProfile.key;
+                const contextualAnalysis = allFunctionsData[funcName][dominantKey];
+                functionModalTitle.textContent = funcName;
+                functionModalStrengths.innerHTML = `<li>- ${contextualAnalysis.s}</li>`;
+                functionModalWeaknesses.innerHTML = `<li>- ${contextualAnalysis.w}</li>`;
+                showModal(functionModal);
+            }));
+
+            document.querySelectorAll('.interaction-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const targetKey = e.currentTarget.dataset.interactionKey;
+                const dominantKey = lastResults.dominantProfile.key;
+                const interactionData = interactionTips[dominantKey][targetKey];
+                interactionModalTitle.textContent = `${profilesData[dominantKey].name} interagindo com ${profilesData[targetKey].name}`;
+                interactionModalSynergy.textContent = interactionData.synergy;
+                interactionModalAttention.textContent = interactionData.attention;
+                showModal(interactionModal);
+            }));
+        }
+
+        // --- Funções de Desenho e Exportação ---
+        function drawRadarChart(sortedProfiles) {
+            const ctx = document.getElementById('radarChart')?.getContext('2d');
+            if (!ctx) return;
+
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+            const fontColor = isDarkMode ? '#E5E7EB' : '#1F2937';
+
+            const labels = ['🦅 Águia', '🐈 Gato', '🐺 Lobo', '🦈 Tubarão'];
+            const dataScores = { 'I': 0, 'C': 0, 'O': 0, 'A': 0 };
+            sortedProfiles.forEach(p => { dataScores[p.key] = p.percentage; });
+            const data = [dataScores['I'], dataScores['C'], dataScores['O'], dataScores['A']];
+
+            if (radarChartInstance) { radarChartInstance.destroy(); }
+
+            radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Seu Perfil',
+                        data: data,
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: gridColor },
+                            grid: { color: gridColor },
+                            pointLabels: {
+                                font: { size: 14, family: 'Inter, sans-serif' },
+                                color: fontColor
+                            },
+                            ticks: { display: false, stepSize: 25, max: 100, min: 0 }
+                        }
+                    },
+                    plugins: { legend: { display: false } },
+                }
+            });
+        }
+        
+        async function shareResultsAsImage() {
+             showModal(validationModal, "A funcionalidade de partilhar imagem está em desenvolvimento!");
+        }
+
+        function generatePDF() {
+            showModal(validationModal, "A funcionalidade de gerar PDF está em desenvolvimento!");
+        }
+        
+        function showAnswerKey() {
+            const tableBody = document.getElementById('answer-key-body');
+            tableBody.innerHTML = '';
+            profileTestQuestions.forEach((q, index) => {
+                let rowHTML = `<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">${index + 1}</td>`;
+                const findOptionText = (profile) => q.options.find(opt => opt.profile === profile).text || '';
+                
+                rowHTML += `<td class="py-4 px-6">${findOptionText('I')}</td>`;
+                rowHTML += `<td class="py-4 px-6">${findOptionText('C')}</td>`;
+                rowHTML += `<td class="py-4 px-6">${findOptionText('O')}</td>`;
+                rowHTML += `<td class="py-4 px-6">${findOptionText('A')}</td>`;
+                rowHTML += `</tr>`;
+                tableBody.innerHTML += rowHTML;
+            });
+
+            const tableBodyVak = document.getElementById('answer-key-body-vak');
+            tableBodyVak.innerHTML = '';
+            vakTestQuestions.forEach((q, index) => {
+                const vakProfile = vakProfileData[q.series];
+                let rowHTML = `<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">${index + 1}</td>
+                                <td class="py-4 px-6">${q.text}</td>
+                                <td class="py-4 px-6">${vakProfile.emoji} ${vakProfile.name}</td>
+                               </tr>`;
+                tableBodyVak.innerHTML += rowHTML;
+            });
+
+            showScreen(answerKeyScreen);
+        }
+
+        function populateIcons() {
+            const allEmojis = { ...profilesData, ...vakProfileData };
+            startIconsContainer.innerHTML = ''; analyzingIconsContainer.innerHTML = '';
+            // Ordem customizada para melhor visual
+            const iconOrder = ['I', 'O', 'C', 'A', 'V', 'AU', 'K'];
+            iconOrder.forEach(key => {
+                 startIconsContainer.innerHTML += `<div class="flex justify-center items-center h-20 w-20 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4"><span class="text-4xl">${allEmojis[key].emoji}</span></div>`;
+            });
+
+            Object.keys(profilesData).forEach((key, index) => {
+                analyzingIconsContainer.innerHTML += `<div class="text-6xl" style="animation: pulse-icon 2s ease-in-out infinite; animation-delay: ${index * 0.4}s;">${profilesData[key].emoji}</div>`;
+            });
+        }
+
+        // --- EVENT LISTENERS E INICIALIZAÇÃO ---
+        startBtn.addEventListener('click', async () => { 
+            if (nameInput.value.trim() === '') {
+                showModal(validationModal, 'Por favor, digite seu nome para começar.');
+                return;
+            }
+            if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') await Tone.start();
+            playClickSound();
+            startTest('profile');
+        });
+        startVakBtn.addEventListener('click', () => { playClickSound(); startTest('vak'); });
+        prevBtn.addEventListener('click', () => { playClickSound(); handlePrev(); }); 
+        nextBtn.addEventListener('click', () => { playClickSound(); handleNext(); });
+        modalCloseBtn.addEventListener('click', () => hideModal(validationModal)); 
+        functionModalCloseBtn.addEventListener('click', () => hideModal(functionModal));
+        interactionModalCloseBtn.addEventListener('click', () => hideModal(interactionModal));
+        adminBtn.addEventListener('click', () => showModal(passwordModal));
+        passwordCancelBtn.addEventListener('click', () => hideModal(passwordModal));
+        passwordSubmitBtn.addEventListener('click', () => {
+            if (passwordInput.value === 'JD123') {
+                hideModal(passwordModal);
+                showAnswerKey();
+                passwordInput.value = '';
+            } else {
+                showModal(validationModal, 'Senha incorreta!');
+            }
+        });
+        closeAnswerKeyBtn.addEventListener('click', () => showScreen(startScreen));
+        
+        function applyTheme(isDark) { 
+            document.documentElement.classList.toggle('dark', isDark);
+            sunIcon.classList.toggle('hidden', !isDark);
+            moonIcon.classList.toggle('hidden', isDark);
+             if (radarChartInstance) {
+                const gridColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+                const fontColor = isDark ? '#E5E7EB' : '#1F2937';
+                radarChartInstance.options.scales.r.angleLines.color = gridColor;
+                radarChartInstance.options.scales.r.grid.color = gridColor;
+                radarChartInstance.options.scales.r.pointLabels.color = fontColor;
+                radarChartInstance.update('none');
+            }
+        }
+
+        themeToggle.addEventListener('click', () => { 
+            const isDark = document.documentElement.classList.toggle('dark'); 
+            localStorage.setItem('theme', isDark ? 'dark' : 'light'); 
+            applyTheme(isDark);
+        });
+
+        function showModal(modal, message = '') {
+            if (modal === validationModal && message) modalMessage.textContent = message;
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+        function hideModal(modal) {
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        (function() { 
+            const savedTheme = localStorage.getItem('theme'); 
+            applyTheme(savedTheme === 'dark'); 
+            populateIcons();
+            initAudio(); 
+            showScreen(startScreen); 
+        })();
+    </script>
+</body>
+</html>
+
