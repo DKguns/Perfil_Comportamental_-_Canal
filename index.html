@@ -172,6 +172,16 @@
             </div>
         </div>
     </div>
+    <div id="resume-modal" class="modal-backdrop hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 opacity-0">
+        <div class="modal-content bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
+            <h3 class="text-xl font-bold mb-4">Continuar de onde parou?</h3>
+            <p id="resume-message" class="mb-6 text-gray-600 dark:text-gray-300"></p>
+            <div class="flex gap-4">
+                <button id="resume-new-btn" class="w-full bg-gray-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition">Começar de Novo</button>
+                <button id="resume-continue-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition">Continuar</button>
+            </div>
+        </div>
+    </div>
     <div id="function-modal" class="modal-backdrop hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 opacity-0">
          <div class="modal-content bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl text-left max-w-md w-full">
             <h3 id="function-modal-title" class="text-2xl font-bold mb-4 text-center"></h3>
@@ -433,7 +443,7 @@
         let radarChartInstance;
         
         // --- ELEMENTOS DO DOM ---
-        const startScreen = document.getElementById('start-screen'), quizScreen = document.getElementById('quiz-screen'), analyzingScreen = document.getElementById('analyzing-screen'), resultsScreen = document.getElementById('results-screen'), transitionScreen = document.getElementById('transition-screen'), startBtn = document.getElementById('start-btn'), nameInput = document.getElementById('name-input'), startIconsContainer = document.getElementById('start-icons-container'), analyzingIconsContainer = document.getElementById('analyzing-icons-container'), questionContainer = document.getElementById('question-container'), questionCounter = document.getElementById('question-counter'), totalQuestions = document.getElementById('total-questions'), progressBar = document.getElementById('progress-bar'), prevBtn = document.getElementById('prev-btn'), nextBtn = document.getElementById('next-btn'), themeToggle = document.getElementById('theme-toggle'), sunIcon = document.getElementById('theme-icon-sun'), moonIcon = document.getElementById('theme-icon-moon'), validationModal = document.getElementById('validation-modal'), modalMessage = document.getElementById('modal-message'), modalCloseBtn = document.getElementById('modal-close-btn'), quizTitle = document.getElementById('quiz-title'), startVakBtn = document.getElementById('start-vak-btn'), functionModal = document.getElementById('function-modal'), functionModalTitle = document.getElementById('function-modal-title'), functionModalStrengths = document.getElementById('function-modal-strengths'), functionModalWeaknesses = document.getElementById('function-modal-weaknesses'), functionModalCloseBtn = document.getElementById('function-modal-close-btn'), interactionModal = document.getElementById('interaction-modal'), interactionModalTitle = document.getElementById('interaction-modal-title'), interactionModalSynergy = document.getElementById('interaction-modal-synergy'), interactionModalAttention = document.getElementById('interaction-modal-attention'), interactionModalCloseBtn = document.getElementById('interaction-modal-close-btn'), passwordModal = document.getElementById('password-modal'), adminBtn = document.getElementById('admin-btn'), passwordInput = document.getElementById('password-input'), passwordCancelBtn = document.getElementById('password-cancel-btn'), passwordSubmitBtn = document.getElementById('password-submit-btn'), answerKeyScreen = document.getElementById('answer-key-screen'), closeAnswerKeyBtn = document.getElementById('close-answer-key-btn');
+        const startScreen = document.getElementById('start-screen'), quizScreen = document.getElementById('quiz-screen'), analyzingScreen = document.getElementById('analyzing-screen'), resultsScreen = document.getElementById('results-screen'), transitionScreen = document.getElementById('transition-screen'), startBtn = document.getElementById('start-btn'), nameInput = document.getElementById('name-input'), startIconsContainer = document.getElementById('start-icons-container'), analyzingIconsContainer = document.getElementById('analyzing-icons-container'), questionContainer = document.getElementById('question-container'), questionCounter = document.getElementById('question-counter'), totalQuestions = document.getElementById('total-questions'), progressBar = document.getElementById('progress-bar'), prevBtn = document.getElementById('prev-btn'), nextBtn = document.getElementById('next-btn'), themeToggle = document.getElementById('theme-toggle'), sunIcon = document.getElementById('theme-icon-sun'), moonIcon = document.getElementById('theme-icon-moon'), validationModal = document.getElementById('validation-modal'), modalMessage = document.getElementById('modal-message'), modalCloseBtn = document.getElementById('modal-close-btn'), quizTitle = document.getElementById('quiz-title'), startVakBtn = document.getElementById('start-vak-btn'), functionModal = document.getElementById('function-modal'), functionModalTitle = document.getElementById('function-modal-title'), functionModalStrengths = document.getElementById('function-modal-strengths'), functionModalWeaknesses = document.getElementById('function-modal-weaknesses'), functionModalCloseBtn = document.getElementById('function-modal-close-btn'), interactionModal = document.getElementById('interaction-modal'), interactionModalTitle = document.getElementById('interaction-modal-title'), interactionModalSynergy = document.getElementById('interaction-modal-synergy'), interactionModalAttention = document.getElementById('interaction-modal-attention'), interactionModalCloseBtn = document.getElementById('interaction-modal-close-btn'), passwordModal = document.getElementById('password-modal'), adminBtn = document.getElementById('admin-btn'), passwordInput = document.getElementById('password-input'), passwordCancelBtn = document.getElementById('password-cancel-btn'), passwordSubmitBtn = document.getElementById('password-submit-btn'), answerKeyScreen = document.getElementById('answer-key-screen'), closeAnswerKeyBtn = document.getElementById('close-answer-key-btn'), resumeModal = document.getElementById('resume-modal'), resumeMessage = document.getElementById('resume-message'), resumeNewBtn = document.getElementById('resume-new-btn'), resumeContinueBtn = document.getElementById('resume-continue-btn');
 
         // --- FUNÇÕES DE CONTROLE ---
         function initAudio() {
@@ -472,10 +482,20 @@
             if (currentTest === 'profile') {
                 const questionText = q.question.substring(q.question.indexOf('.') + 1).trim();
                 questionContainer.innerHTML = `<div class="question-card bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg text-center"><h2 class="text-2xl sm:text-3xl font-bold mb-8">${questionText}</h2><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${q.options.map((option, i) => `<div><input type="radio" name="question${index}" id="q${index}o${i}" value="${option.profile}" class="hidden peer" ${currentAnswers[index] === option.profile ? 'checked' : ''}><label for="q${index}o${i}" class="block cursor-pointer p-5 border border-gray-300 dark:border-gray-600 rounded-xl text-center transition-all duration-200 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 peer-checked:shadow-lg peer-checked:scale-105 hover:border-blue-500 dark:hover:border-blue-400">${option.text}</label></div>`).join('')}</div></div>`;
-                document.querySelectorAll(`input[name="question${index}"]`).forEach(radio => radio.addEventListener('change', (e) => { playClickSound(); currentAnswers[index] = e.target.value; setTimeout(handleNext, 200); }));
+                document.querySelectorAll(`input[name="question${index}"]`).forEach(radio => radio.addEventListener('change', (e) => { 
+                    playClickSound(); 
+                    currentAnswers[index] = e.target.value; 
+                    saveProgress();
+                    setTimeout(handleNext, 200); 
+                }));
             } else { // VAK test
                  questionContainer.innerHTML = `<div class="question-card bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg text-center"><h2 class="text-2xl sm:text-3xl font-bold mb-8">${q.text}</h2><div class="flex justify-center gap-6">${['Sim', 'Não'].map((label, i) => `<div><input type="radio" name="question${index}" id="q${index}o${i}" value="${label === 'Sim' ? q.series : 'N'}" class="hidden peer" ${currentAnswers[index] === (label === 'Sim' ? q.series : 'N') ? 'checked' : ''}><label for="q${index}o${i}" class="block cursor-pointer px-10 py-5 border border-gray-300 dark:border-gray-600 rounded-xl text-center transition-all duration-200 peer-checked:bg-teal-600 peer-checked:text-white peer-checked:border-teal-600 peer-checked:shadow-lg peer-checked:scale-105 hover:border-teal-500 dark:hover:border-teal-400 text-xl">${label}</label></div>`).join('')}</div></div>`;
-                document.querySelectorAll(`input[name="question${index}"]`).forEach(radio => radio.addEventListener('change', (e) => { playClickSound(); currentAnswers[index] = e.target.value; setTimeout(handleNext, 200); }));
+                document.querySelectorAll(`input[name="question${index}"]`).forEach(radio => radio.addEventListener('change', (e) => { 
+                    playClickSound(); 
+                    currentAnswers[index] = e.target.value; 
+                    saveProgress();
+                    setTimeout(handleNext, 200); 
+                }));
             }
             updateProgress(); updateNavigation();
         }
@@ -513,6 +533,7 @@
                 const scores = { 'A': 0, 'O': 0, 'C': 0, 'I': 0 }; 
                 currentAnswers.forEach(answer => { if (answer) scores[answer]++; }); 
                 storedProfileScores = scores;
+                saveProgress();
                 showScreen(transitionScreen);
             } else { // VAK
                 const scores = { 'V': 0, 'AU': 0, 'K': 0 };
@@ -521,6 +542,7 @@
                 showScreen(analyzingScreen);
                 setTimeout(() => {
                     displayIntegratedResults(storedProfileScores, storedVakScores);
+                    clearProgress();
                 }, 3000);
             }
         }
@@ -530,6 +552,7 @@
             currentTest = null;
             storedProfileScores = {};
             storedVakScores = {};
+            clearProgress();
             showScreen(startScreen);
         }
 
@@ -879,6 +902,65 @@
             });
         }
 
+        // --- PROGRESS SAVING ---
+        function saveProgress() {
+            const progress = {
+                name: nameInput.value,
+                currentTest: currentTest,
+                currentQuestionIndex: currentQuestionIndex,
+                currentAnswers: currentAnswers,
+                storedProfileScores: storedProfileScores
+            };
+            localStorage.setItem('quizProgress', JSON.stringify(progress));
+        }
+
+        function loadProgress() {
+            const savedProgress = localStorage.getItem('quizProgress');
+            if (savedProgress) {
+                const progress = JSON.parse(savedProgress);
+                resumeMessage.textContent = `Olá, ${progress.name || 'visitante'}! Encontrámos um teste em andamento. Deseja continuar?`;
+                showModal(resumeModal);
+
+                resumeContinueBtn.onclick = async () => {
+                    if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') await Tone.start();
+                    nameInput.value = progress.name;
+                    currentTest = progress.currentTest;
+                    currentQuestionIndex = progress.currentQuestionIndex;
+                    currentAnswers = progress.currentAnswers;
+                    storedProfileScores = progress.storedProfileScores;
+
+                    if (currentTest === 'profile' && Object.keys(storedProfileScores).length > 0) {
+                         showScreen(transitionScreen);
+                    } else if (currentTest === 'vak') {
+                        startTest('vak');
+                        currentQuestionIndex = progress.currentQuestionIndex;
+                        currentAnswers = progress.currentAnswers;
+                        showQuestion(currentQuestionIndex);
+                    } else {
+                        startTest('profile');
+                        currentQuestionIndex = progress.currentQuestionIndex;
+                        currentAnswers = progress.currentAnswers;
+                        showQuestion(currentQuestionIndex);
+                    }
+                    hideModal(resumeModal);
+                };
+
+                resumeNewBtn.onclick = () => {
+                    hideModal(resumeModal);
+                    clearProgress();
+                    nameInput.value = '';
+                };
+
+            } else {
+                 showScreen(startScreen); 
+            }
+        }
+
+        function clearProgress() {
+            localStorage.removeItem('quizProgress');
+        }
+
+
         // --- EVENT LISTENERS E INICIALIZAÇÃO ---
         startBtn.addEventListener('click', async () => { 
             if (nameInput.value.trim() === '') {
@@ -887,6 +969,7 @@
             }
             if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') await Tone.start();
             playClickSound();
+            clearProgress(); // Clear any old progress before starting new
             startTest('profile');
         });
         startVakBtn.addEventListener('click', () => { playClickSound(); startTest('vak'); });
@@ -943,7 +1026,7 @@
             applyTheme(savedTheme === 'dark'); 
             populateIcons();
             initAudio(); 
-            showScreen(startScreen); 
+            loadProgress();
         })();
     </script>
 </body>
