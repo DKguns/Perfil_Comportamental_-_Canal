@@ -49,6 +49,10 @@
             top: 0;
             z-index: -100;
         }
+        /* Classe para forçar quebra de página no PDF */
+        .pdf-page-break {
+            page-break-before: always;
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased transition-colors duration-300 overflow-x-hidden">
@@ -219,10 +223,19 @@
         <div id="share-card" class="bg-white p-6 w-[450px]">
             <h2 id="share-card-name" class="text-2xl font-bold text-center text-gray-800 mb-1"></h2>
             <p id="share-card-title" class="text-center text-indigo-500 font-bold text-lg"></p>
-            <p id="share-card-superpower" class="text-center text-gray-600 text-sm mb-4"></p>
-            <div id="share-card-chart" class="w-full h-48 mx-auto"></div>
+            <p id="share-card-superpower" class="text-center text-gray-600 text-sm mb-2"></p>
+            
+            <h3 class="text-center text-gray-800 font-bold mt-3 text-base">Perfil Comportamental</h3>
+            <div class="flex items-center gap-4">
+                <div id="share-card-chart" class="w-1/2 h-40 mx-auto"></div>
+                <div id="share-card-percentages" class="w-1/2 grid grid-cols-1 gap-y-1 text-sm text-gray-700"></div>
+            </div>
+            
+            <h3 class="text-center text-gray-800 font-bold mt-4 text-base">Canais de Comunicação</h3>
+            <div id="share-card-vak-chart" class="w-full h-24 mx-auto mt-1"></div>
+
              <div class="mt-4 text-center text-xs text-gray-500">
-                Faça sua análise completa em [URL]
+                Faça sua análise completa!
             </div>
         </div>
     </div>
@@ -579,18 +592,18 @@
 
             resultsScreen.innerHTML = `
                 <div id="pdf-content" class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-lg w-full animate-fade-in space-y-8">
-                    <div class="text-center">
+                    <div class="report-section text-center">
                         <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">Análise Integrada de <span class="text-blue-500">${name}</span></h2>
                         <p class="text-lg font-bold text-gray-700 dark:text-gray-300 mt-2">Seu Perfil: <span class="text-indigo-500">${integratedData.title}</span></p>
                     </div>
 
-                    <div class="text-center bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div class="report-section text-center bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-sm">Seu Superpoder</h3>
                         <p class="text-2xl font-extrabold text-indigo-500 mt-1">${integratedData.superpower}</p>
                         <p class="text-gray-700 dark:text-gray-300 mt-2 max-w-3xl mx-auto">${integratedData.desc}</p>
                     </div>
 
-                    <div>
+                    <div class="report-section">
                         <h3 class="text-2xl font-bold text-center mb-4">Seu Balanço Geral</h3>
                         <div class="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
@@ -604,7 +617,7 @@
                         </div>
                     </div>
                     
-                    <div>
+                    <div class="report-section">
                          <h3 class="text-2xl font-bold text-center mb-4">Visualização em Radar</h3>
                          <div class="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
                             <div class="mx-auto max-w-md h-80">
@@ -613,7 +626,7 @@
                         </div>
                     </div>
                     
-                    <div>
+                    <div class="report-section">
                         <h3 class="text-2xl font-bold text-center mb-4">Sua Dinâmica Comportamental</h3>
                         <div class="grid md:grid-cols-2 gap-6">
                             <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-700">
@@ -627,7 +640,7 @@
                         </div>
                     </div>
                     
-                    <div>
+                    <div class="report-section">
                         <h3 class="text-2xl font-bold text-center mb-4">Sua Forma de Comunicar</h3>
                         <div class="grid md:grid-cols-2 gap-6">
                             <div class="bg-teal-50 dark:bg-teal-900/20 p-6 rounded-lg border border-teal-200 dark:border-teal-700">
@@ -650,7 +663,7 @@
 
 
                     <!-- Tabs -->
-                    <div class="w-full">
+                    <div class="report-section w-full">
                         <h3 class="text-2xl font-bold text-center mb-4">Análises Adicionais</h3>
                         <div class="border-b border-gray-200 dark:border-gray-700">
                             <nav id="tabs" class="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
@@ -855,11 +868,29 @@
             shareBtn.disabled = true;
             shareBtnText.textContent = 'A gerar...';
 
-            const { name, integratedData, sortedProfiles } = lastResults;
+            const { name, integratedData, sortedProfiles, sortedVak } = lastResults;
+            const dominantVakData = vakProfileData[sortedVak[0].key];
+
             document.getElementById('share-card-name').textContent = name;
-            document.getElementById('share-card-title').textContent = integratedData.title;
+            document.getElementById('share-card-title').textContent = `${integratedData.title} (${dominantVakData.name})`;
             document.getElementById('share-card-superpower').textContent = `Superpoder: ${integratedData.superpower}`;
             
+            const percentagesContainer = document.getElementById('share-card-percentages');
+            percentagesContainer.innerHTML = '';
+            const profileOrder = ['I', 'C', 'O', 'A'];
+            profileOrder.forEach(key => {
+                const profileInfo = sortedProfiles.find(p => p.key === key);
+                if(profileInfo) {
+                     const profile = profilesData[profileInfo.key];
+                     percentagesContainer.innerHTML += `
+                        <div class="flex items-center justify-between text-left">
+                            <span class="font-medium">${profile.emoji} ${profile.name}</span>
+                            <span class="font-bold">${profileInfo.percentage.toFixed(0)}%</span>
+                        </div>`;
+                }
+            });
+
+
             const chartContainer = document.getElementById('share-card-chart');
             const chartCanvas = document.createElement('canvas');
             chartContainer.innerHTML = '';
@@ -897,6 +928,40 @@
                 }
             });
             
+            const vakChartContainer = document.getElementById('share-card-vak-chart');
+            const vakChartCanvas = document.createElement('canvas');
+            vakChartContainer.innerHTML = '';
+            vakChartContainer.appendChild(vakChartCanvas);
+
+            new Chart(vakChartCanvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: sortedVak.map(v => `${vakProfileData[v.key].emoji} ${vakProfileData[v.key].name}`),
+                    datasets: [{
+                        data: sortedVak.map(v => v.score),
+                        backgroundColor: sortedVak.map(v => {
+                            const colorClass = vakProfileData[v.key].color;
+                            if (colorClass.includes('sky')) return 'rgba(14, 165, 233, 0.7)';
+                            if (colorClass.includes('teal')) return 'rgba(20, 184, 166, 0.7)';
+                            if (colorClass.includes('orange')) return 'rgba(249, 115, 22, 0.7)';
+                            return 'rgba(107, 114, 128, 0.7)';
+                        }),
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 0 },
+                    scales: {
+                        x: { beginAtZero: true, max: 10, display: false },
+                        y: { grid: { display: false }, ticks: { color: '#1F2937', font: { size: 12 } } }
+                    },
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                }
+            });
+
+
             await new Promise(resolve => setTimeout(resolve, 500));
 
             const cardElement = document.getElementById('share-card');
@@ -927,49 +992,43 @@
             }
         }
 
-        function generatePDF() {
+        async function generatePDF() {
             const { jsPDF } = window.jspdf;
             const downloadBtn = document.getElementById('download-pdf-btn');
             downloadBtn.textContent = 'A gerar...';
             downloadBtn.disabled = true;
 
-            const reportElement = document.getElementById('pdf-content');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const margin = 15;
+            let y = margin;
             
-            html2canvas(reportElement, {
-                scale: 2,
-                useCORS: true, 
-                backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#ffffff'
-            }).then(canvas => {
+            const sections = document.querySelectorAll('.report-section');
+
+            for (const section of sections) {
+                const canvas = await html2canvas(section, { 
+                    scale: 2, 
+                    useCORS: true, 
+                    backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#ffffff'
+                });
+                
                 const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                const canvasWidth = canvas.width;
-                const canvasHeight = canvas.height;
-                const ratio = canvasWidth / canvasHeight;
-                const imgWidth = pdfWidth - 20; // with margin
-                const imgHeight = imgWidth / ratio;
-                let heightLeft = imgHeight;
-                let position = 10; // top margin
+                const imgWidth = pageWidth - margin * 2;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
 
-                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-                heightLeft -= (pdfHeight - 20);
-
-                while (heightLeft > 0) {
-                    position = heightLeft - imgHeight + 10; // top margin for new page
+                if (y + imgHeight + margin > pageHeight) {
                     pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-                    heightLeft -= (pdfHeight - 20);
+                    y = margin;
                 }
+                
+                pdf.addImage(imgData, 'PNG', margin, y, imgWidth, imgHeight);
+                y += imgHeight + 10;
+            }
 
-                pdf.save(`Relatorio_Perfil_${lastResults.name.replace(/\s/g, '_')}.pdf`);
-                downloadBtn.textContent = 'Baixar Relatório';
-                downloadBtn.disabled = false;
-            }).catch(err => {
-                console.error("Erro ao gerar PDF:", err);
-                downloadBtn.textContent = 'Baixar Relatório';
-                downloadBtn.disabled = false;
-            });
+            pdf.save(`Relatorio_Perfil_${lastResults.name.replace(/\s/g, '_')}.pdf`);
+            downloadBtn.textContent = 'Baixar Relatório';
+            downloadBtn.disabled = false;
         }
         
         function showAnswerKey() {
